@@ -51,8 +51,15 @@ Reach for `ai-software-team` instead when:
 
 ## Install
 
-Copy `SKILL.md` (and `evals/` if you want the benchmark) into your skills directory —
-that's the whole install. No plugin manifest, no dependencies.
+```
+git clone https://github.com/chagaphongk/ai-software-team.git
+bash ai-software-team/scripts/install.sh              # -> ~/.claude/skills/ai-software-team
+bash ai-software-team/scripts/install.sh --project     # -> ./.claude/skills/ai-software-team (this repo only)
+```
+
+Or skip the script — copy `SKILL.md` (and `evals/` if you want the benchmark) into your
+skills directory by hand. That's the whole install either way: no plugin manifest, no
+dependencies. Re-run the script to update an existing install after a `git pull`.
 
 ## Benchmark
 
