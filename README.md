@@ -37,8 +37,8 @@ inline, no reviewer round trip.
   RESEARCH, spawned by name (`software-team:builder`, not a bare `builder`).
 - **PLAN sizes itself before drafting** — if a task turns out to hide more than two or
   three genuine forks, or its destination can't be stated in a line or two, PLAN stops
-  and recommends handing off to `wayfinder` (a separate installed skill for exactly this)
-  instead of forcing an oversized, likely-to-break plan into one turn.
+  and proposes a phase breakdown for approval instead of forcing an oversized,
+  likely-to-break plan into one turn; each phase then gets its own normal plan.
 - **Risk-tier routing (T0/T1/T2)** — T0 still spawns a builder (fast model, orchestrator
   verifies by diff); T1 always gets an independent verifier; T2 requires human plan
   approval, opus-tier subagents, and a mandatory reviewer plus security-reviewer.
@@ -72,28 +72,61 @@ inline, no reviewer round trip.
 
 ## Install
 
-Requires `python3` on `PATH` (the hooks use it).
+Requires `python3` on `PATH` (the hooks use it). Current version: `0.1.0`.
+
+1. Register the marketplace, once per machine:
+
+   ```
+   /plugin marketplace add chagaphongk/software-team
+   ```
+
+   For local development, point at a clone instead of the GitHub repo:
+
+   ```
+   /plugin marketplace add /path/to/software-team
+   ```
+
+2. Install the plugin from it:
+
+   ```
+   /plugin install software-team@software-team-marketplace
+   ```
+
+3. Restart the session — plugin agents, commands, and hooks load at startup, so a
+   mid-session install won't take effect until you do.
+
+4. If you previously copy-installed the old single-conversation `ai-software-team` skill
+   (`~/.claude/skills/ai-software-team` or `./.claude/skills/ai-software-team`), remove
+   that directory — otherwise both the old and new skill are live and can trigger-collide.
+
+5. Recommended: add a `permissions.deny` block for `.env*` / `*.pem` / `*.key` /
+   `id_rsa*` files in your own `settings.json` — the plugin's hooks (`guard_secrets.py`)
+   are the second guard layer, not a substitute for the harness-level deny rule.
+
+### Verify it's working
+
+Run any trivial task (a T0-sized change), then:
 
 ```
-/plugin marketplace add chagaphongk/software-team
-/plugin install software-team@software-team-marketplace
+/software-team:workflow
 ```
 
-For local development, point the marketplace at a clone instead:
+should report a tier, state, and pending gates sourced from
+`.claude/state/agent-log.jsonl` — if that file doesn't exist yet or the command says
+hooks aren't firing, the plugin installed but the hooks didn't register; re-check step 3
+(restart) before anything else.
+
+### Update
 
 ```
-/plugin marketplace add /path/to/software-team
-/plugin install software-team@software-team-marketplace
+/plugin marketplace update software-team-marketplace
+/plugin update software-team
 ```
 
-If you previously copy-installed the old single-conversation `ai-software-team` skill
-(`~/.claude/skills/ai-software-team` or `./.claude/skills/ai-software-team`), remove that
-directory — otherwise both the old and new skill are live and can trigger-collide.
-
-Update with `claude plugin update software-team`. Recommended: add the same
-`permissions.deny` block agent-office documents for `.env*` / `*.pem` / `*.key` /
-`id_rsa*` files in your own `settings.json` — the plugin's hooks are the second guard
-layer, not a substitute for the harness-level deny rule.
+(or `/plugin uninstall software-team` followed by a fresh `/plugin install` from step 2,
+if the update command isn't available in your Claude Code version). Restart the session
+afterward — same reason as a fresh install. Check `docs/decisions.md` in this repo after
+updating for anything course-changing since your installed version.
 
 ## Benchmark
 

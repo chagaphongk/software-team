@@ -1,6 +1,6 @@
 ---
 name: software-team
-description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with a dedicated reviewer role reading every diff alongside the independent verifier that runs it. Classify the risk tier first, then dispatch researcher/builder/reviewer/security-reviewer/documenter/verifier/deployer/designer subagents — in parallel batches whenever their scopes are independent — through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, gate risky or irreversible work behind human approval (deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself), and enforce the guard rails deterministically via hooks (not just instructions). Prefer this over agent-office specifically when you want the stricter zero-self-edit invariant and the standalone reviewer pass; agent-office remains the leaner choice when T0 work should be handled inline without a subagent round trip. Prefer either office over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the shape of the work is not a build: an unsettled feature belongs in a brainstorming skill first, an unexplained bug belongs in a systematic-debugging skill first — each hands the work back here once the approach is settled. Do NOT use for trivial one-liner questions or quick syntax lookups.'
+description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with a dedicated reviewer role reading every diff alongside the independent verifier that runs it. Classify the risk tier first, then dispatch researcher/builder/reviewer/security-reviewer/documenter/verifier/deployer/designer subagents — in parallel batches whenever their scopes are independent — through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, gate risky or irreversible work behind human approval (deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself), and enforce the guard rails deterministically via hooks (not just instructions). Prefer this over agent-office specifically when you want the stricter zero-self-edit invariant and the standalone reviewer pass; agent-office remains the leaner choice when T0 work should be handled inline without a subagent round trip. Prefer either office over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the shape of the work is not a build at all — a question the human can just answer, nothing to spawn for. Do NOT use for trivial one-liner questions or quick syntax lookups.'
 ---
 
 # Software Team
@@ -25,9 +25,9 @@ question nobody has settled.
 
 | Signal in the request | Where it goes |
 |---|---|
-| A bug, a failing test, behavior nobody can explain | **superpowers:systematic-debugging** sets the approach, then the office runs the fix |
-| New feature where the requirements themselves are unsettled | **superpowers:brainstorming** first — the office cannot verify against criteria that don't exist yet |
-| A loose idea, too big for one session, foggy about its own destination | **wayfinder** — see `## When PLAN doesn't fit one session` below; name the `/wayfinder` command and let the human start it, don't draft a plan yet |
+| A bug, a failing test, behavior nobody can explain | Spawn `software-team:researcher` to reproduce and trace the actual failing path first — never plan a fix from the symptom alone |
+| New feature where the requirements themselves are unsettled | Ask the human what's unsettled before drafting PLAN, per `## Asking the human` — the office cannot verify against criteria that don't exist yet |
+| A loose idea, too big for one session, foggy about its own destination | See `## When PLAN doesn't fit one session` below — don't draft a plan yet |
 | A written plan or spec ready to execute | The office loop, so BUILD gets an independent REVIEW and VERIFY |
 | A read-only deliverable: a code review, an audit, a design critique | Skip PLAN, spawn `software-team:reviewer` (or `software-team:designer` in REVIEW mode for a UX-focused critique) directly — see the read-only exception in Step 3 |
 | A new screen or flow with no design spec yet | Spawn `software-team:designer` in DESIGN mode before PLAN — its spec becomes PLAN's input, not a replacement for PLAN |
@@ -169,45 +169,47 @@ PLAN turn and wait, the same way any other question to the human works.
 
 Some tasks only reveal their true size once you start drafting: the "one clear ask" from
 Step 1 turns out to hide several genuinely diverging forks, or an acceptance criterion
-can't be written because an earlier step first needs its own investigation. This is the
-shape **wayfinder** — a separate, installed skill for exactly this — already solves, so
-borrow its vocabulary rather than inventing a second one: a **destination** (what
-reaching the end of this effort looks like), a **fork** (options that genuinely diverge,
-not yet decided) versus a **ratification** (follows from what's already settled), and
+can't be written because an earlier step first needs its own investigation. Use these
+terms for the two things that can be wrong with a plan's size: a **fork** (options that
+genuinely diverge, not yet decided — already sharp enough to put to the human) versus
 **fog** (a question you can tell is coming but can't yet phrase sharply enough to act on
-— not the same as a fork, which is already sharp but undecided).
+at all — coarser than a fork, not yet ready to ask).
 
 **Stay inline** for the ordinary case — one or two forks, each answerable by asking the
 human a direct question, nothing that needs its own multi-session investigation: draft
 the plan as normal, with each fork as an explicit question in Step 3 of `## PLAN output
 shape`. Most T1/T2 tasks never leave this path.
 
-**Hand off to wayfinder** when any of the sizing signals above actually hold — don't
-force a plan that's likely to break on contact with the work just to have something to
-present. wayfinder is invoked by the human, never by you (it disables model-invocation on
-purpose) — name it and hand off what you already know, so its charting session doesn't
-start cold:
+**Break into phases** when any of the sizing signals above actually hold — don't force a
+plan that's likely to break on contact with the work just to have something to present.
+Draft a **Phase Map** instead of a single PLAN, and present it for approval before
+drafting Phase 1's actual plan:
 
 ```
-This looks bigger than one plan — [N] forks, and [the destination/question that's still
-foggy]. I'd recommend charting it with wayfinder instead of me drafting a plan likely to
-break on contact.
+This is bigger than one plan — [N] forks, and [what's still too foggy to phase yet].
+Proposed phase breakdown instead of a plan likely to break on contact:
 
-What I can hand it:
-- Destination (draft): <best one-line attempt, marked as a draft>
-- Forks already visible: <list, one line each>
-- Fog: <what's clearly coming but not sharp enough to act on yet>
+Destination (draft): <best one-line attempt, marked as a draft — may sharpen as phases close>
+Phase 1: <name> — <what it covers, sized to fit one PLAN -> BUILD -> REVIEW -> VERIFY cycle>
+Phase 2: <name> — <...>
+Forks that decide phase order/scope: <list, one line each — put to the human, not answered for them>
+Fog: <what's clearly coming but not sharp enough to phase yet>
 
-Run /wayfinder (or tell me to) with the above to start charting — or if you'd rather I
-draft what I have now and take the risk of a plan that doesn't survive contact, say so.
+Confirm the phase breakdown (and the forks above), or tell me to adjust it — Phase 1 gets
+its own PLAN once this is approved.
 ```
 
 Never silently draft a monolithic plan for work you've just told the human is too big for
-one — that's the exact failure this section exists to catch. Once wayfinder's map
-produces a resolved destination and settled decisions, return here and draft `## PLAN
-output shape` from the resolution. wayfinder replaces guessing at scope, not the office's
-own discipline once scope is settled: RESEARCH → PLAN → BUILD → REVIEW → VERIFY still
-runs per resolved ticket or phase, one at a time, exactly as for any other task.
+one — that's the exact failure this section exists to catch. Once the human confirms the
+breakdown, draft `## PLAN output shape` for Phase 1 only. Close each phase through the
+normal office loop (RESEARCH → PLAN → BUILD → REVIEW → VERIFY → DONE) exactly as for any
+other task, and log the phase's completion as a course-changing decision in
+`docs/decisions.md` — reuse that existing continuity mechanism rather than a new
+artifact. Re-check the sizing signals before drafting each later phase's PLAN: a phase
+can itself turn out oversized once its own detail becomes visible, and fog can graduate
+into new phases the original breakdown didn't foresee — update the Phase Map and re-confirm
+with the human when that happens, rather than quietly absorbing the change into whichever
+phase is in progress.
 
 ## Model routing
 
@@ -225,7 +227,7 @@ floor, complexity can only push a spawn up from that floor, never below it.
 | deployer | Session default, regardless of tier | Its job is precise execution of an already-approved command, not judgment; a stronger model buys nothing when there's nothing left to decide |
 | designer, DESIGN mode | Session default; opus if the flow is genuinely novel (no comparable pattern in the codebase or the project's design.md) | Design-from-nothing needs more judgment than design-from-precedent |
 | designer, REVIEW mode | Match the paired reviewer's tier | Same reasoning as security-reviewer — it's reading the same diff at the same stakes |
-| Architecture and planning with real trade-offs, cross-cutting or hard-to-reverse designs, a stuck 3-round loop | **Fable** (top tier), as a one-shot advisor via the `fable-advisor` path | The plan is the highest-leverage artifact; the top tier never runs the routine loop |
+| Architecture and planning with real trade-offs, cross-cutting or hard-to-reverse designs, a stuck 3-round loop | **Fable** (top tier), spawned by you as a one-shot advisor (`Agent` call, `model: "fable"`, no edit tools) with a curated brief — never routine implementation | The plan is the highest-leverage artifact; the top tier never runs the routine loop |
 
 Escalation across tiers is one-way within a task: if a task turns out riskier than
 classified, move up a tier and stay there. Skip the top-tier escalation entirely for
@@ -397,9 +399,7 @@ A task is DONE only when, in this order:
 2. The reviewer (where spawned) returned `APPROVED` and the verifier returned `PASS`.
 3. **Security review for T2 work touching auth, payments, PII, secrets, or a public API**
    — spawn `software-team:security-reviewer` for a dedicated pass against the diff,
-   separate from the standard reviewer and verifier checks; fall back to the
-   `security-review` skill or a `secure-code-guardian` subagent only if
-   `software-team:security-reviewer` is unavailable. Skip for T0/T1 with no
+   separate from the standard reviewer and verifier checks. Skip for T0/T1 with no
    security-sensitive surface.
 4. The diff is scoped to the task — every changed line traces to the request.
 5. Evidence is recorded: the exact commands run and their results.
