@@ -195,7 +195,17 @@ written and confirmed failing before the fix, not added after.
 ## Unsettled requirements before PLAN
 
 "Add a thing" without a clear shape isn't yet a task the office can plan against — PLAN's
-acceptance criteria need a settled destination to test against. Before drafting anything:
+acceptance criteria need a settled destination to test against.
+
+**Brand-new, large work first routes to a dedicated brainstorming skill when one is
+installed**: a greenfield feature or product whose requirement space is itself wide
+deserves a full intent/design exploration, and that skill's output becomes this section's
+settled input. **Routing out is not handing off the task**: when the brainstorm
+concludes, come back here and carry its settled requirements straight into `## PLAN
+output shape` and the normal office loop — the office still builds, reviews, and verifies
+what the brainstorm decided. The steps below are the self-contained path — use them when
+no such skill is installed, or when the work is small enough that a few direct questions
+settle it. Before drafting anything:
 
 1. **State your current understanding** in one or two lines — what you think is being
    asked — so the human can correct a wrong assumption cheaply, before it costs a full
@@ -253,10 +263,20 @@ human a direct question, nothing that needs its own multi-session investigation:
 the plan as normal, with each fork as an explicit question in Step 3 of `## PLAN output
 shape`. Most T1/T2 tasks never leave this path.
 
-**Break into phases** when any of the sizing signals above actually hold — don't force a
-plan that's likely to break on contact with the work just to have something to present.
-Draft a **Phase Map** instead of a single PLAN, and present it for approval before
-drafting Phase 1's actual plan:
+**Prefer a dedicated wayfinding/decision-map skill when one is installed** for work that
+won't finish in one session — a fix or feature spanning sessions is exactly its shape.
+Recommend the human invoke it, handing off the draft destination, the forks, and the fog
+so charting doesn't start cold; its map then owns the multi-session continuity instead of
+the Phase Map below. **The map replaces the Phase Map, not the office loop**: each ticket
+the map marks ready to build comes back through the office as a normal task — its own
+`## PLAN output shape`, tier, and BUILD → REVIEW → VERIFY cycle — and its completion is
+reported back to the map, so charting and building alternate until the destination is
+reached.
+
+**Break into phases** when the sizing signals hold and no wayfinding skill is installed —
+don't force a plan that's likely to break on contact with the work just to have something
+to present. Draft a **Phase Map** instead of a single PLAN, and present it for approval
+before drafting Phase 1's actual plan:
 
 ```
 This is bigger than one plan — [N] forks, and [what's still too foggy to phase yet].

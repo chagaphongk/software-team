@@ -19,6 +19,25 @@ files next to them, and one neighboring source file in the area you are about to
 One glance, not an investigation — if a researcher is already being spawned, fold the
 question into its prompt instead of running a second pass.
 
+## Example mappings — a starting point, not ground truth
+
+Typical stack → skill-category picks. **Verify the exact installed skill name against the
+actual skill list before naming it on a `Load skill:` line** — these examples do not
+override the re-derive-per-project rule above.
+
+| Stack detected in the repo | Skill category to look for |
+|---|---|
+| Next.js | A Next.js-specific skill; for component-level React work inside it, a React skill |
+| React (no Next.js) | A React skill |
+| Angular | An Angular skill |
+| Vue / Nuxt | A Vue skill |
+| Django / FastAPI | The matching Python-framework skill |
+| Plain Python (typed, tested) | A Python best-practices skill |
+| TypeScript-heavy | A TypeScript skill |
+| Go | A Go skill |
+| PostgreSQL tuning / queries | A Postgres skill |
+| Spring Boot / enterprise Java | A Java/Spring skill |
+
 ## Precedence when several skills cover the same topic
 
 1. **A skill vendored in this repo** (`.gemini/skills/`) — it encodes decisions this
