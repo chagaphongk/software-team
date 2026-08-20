@@ -1,6 +1,6 @@
 ---
 name: software-team
-description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with a dedicated reviewer role reading every diff alongside the independent verifier that runs it. Classify the risk tier first, then dispatch researcher/builder/reviewer/security-reviewer/documenter/verifier/deployer/designer subagents — in parallel batches whenever their scopes are independent — through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, gate risky or irreversible work behind human approval (deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself), and enforce the guard rails deterministically via hooks (not just instructions). Prefer this over agent-office specifically when you want the stricter zero-self-edit invariant and the standalone reviewer pass; agent-office remains the leaner choice when T0 work should be handled inline without a subagent round trip. Prefer either office over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the shape of the work is not a build at all — a question the human can just answer, nothing to spawn for. Do NOT use for trivial one-liner questions or quick syntax lookups.'
+description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with a dedicated reviewer role reading every diff alongside the independent verifier that runs it. Classify the risk tier first, then dispatch researcher/builder/tdd-builder/reviewer/security-reviewer/documenter/verifier/deployer/designer subagents — in parallel batches whenever their scopes are independent — through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, gate risky or irreversible work behind human approval (deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself), and enforce the guard rails deterministically via hooks (not just instructions). Prefer this over agent-office specifically when you want the stricter zero-self-edit invariant and the standalone reviewer pass; agent-office remains the leaner choice when T0 work should be handled inline without a subagent round trip. Prefer either office over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the shape of the work is not a build at all — a question the human can just answer, nothing to spawn for. Do NOT use for trivial one-liner questions or quick syntax lookups.'
 ---
 
 # Software Team
@@ -59,22 +59,26 @@ direction.
 ## Step 3 — Route by tier
 
 - **T0 → Quick path.** Spawn `software-team:builder` anyway — this is the invariant, not
-  an exception to it — on the session's default (fast) model, with a one-line acceptance
-  criterion. Verify it yourself by reading the diff; no researcher, reviewer, or verifier
-  spawn. The ceremony that stays cut on T0 is everyone *except* the builder.
+  an exception to it — on the model its difficulty calls for per `## Model routing`
+  (haiku for the mechanical case T0 usually is), with a one-line acceptance criterion.
+  Verify it yourself by reading the diff; no researcher, reviewer, or verifier spawn. The
+  ceremony that stays cut on T0 is everyone *except* the builder.
 - **T1 → Standard.** Run the state machine `RESEARCH → PLAN → BUILD → REVIEW → VERIFY →
   DONE`. Spawn a researcher only when the context is non-obvious. `software-team:builder`
-  builds; `software-team:verifier` verifies — always, on T1, no fast-lane skip, because
-  the point of this skill is that a spawned build always gets an independent check.
-  Spawn `software-team:reviewer` too whenever the diff touches more than one file or
-  changes logic rather than markup/config; skip it only for genuinely single-file,
-  mechanical T1 changes where the verifier's checks already cover it.
+  builds — or `software-team:tdd-builder` instead whenever the plan calls for TDD, or the
+  task is a bug fix (its acceptance criteria include the regression test from
+  `## Debugging before PLAN`, which is the TDD builder's first red step); never spawn
+  both for the same criterion. `software-team:verifier` verifies — always, on T1, no
+  fast-lane skip, because the point of this skill is that a spawned build always gets an
+  independent check. Spawn `software-team:reviewer` too whenever the diff touches more
+  than one file or changes logic rather than markup/config; skip it only for genuinely
+  single-file, mechanical T1 changes where the verifier's checks already cover it.
 - **T2 → Rigorous.** Same state machine, mandatory researcher, mandatory reviewer, and
   **require explicit human approval of the plan before BUILD**. Approval given for one
   plan never carries to a revised plan or a different task. Read `references/rules.md`
-  before PLAN. Override builder/reviewer/verifier to `model: "opus"` on every T2 spawn.
-  Spawn `software-team:security-reviewer` before DONE whenever the work touches auth,
-  payments, PII, secrets, or a public API — see Definition of done.
+  before PLAN. Override builder/tdd-builder/reviewer/verifier to `model: "opus"` on every
+  T2 spawn. Spawn `software-team:security-reviewer` before DONE whenever the work touches
+  auth, payments, PII, secrets, or a public API — see Definition of done.
 - **Deploy, release, publish, or push** (any tier, whenever the task's own completion
   requires an outward-facing or irreversible action) — never run it yourself. Spawn
   `software-team:deployer` with the exact command and the human's quoted approval, per
@@ -182,7 +186,9 @@ inherently flaky**, a single deterministic assert isn't achievable — the accep
 criterion instead states the hit rate the fix must drive to zero (or near-zero) over a
 stated N runs, or verifies the structural guard directly (e.g. a DB unique constraint or
 an idempotency check the verifier can confirm statically), rather than chasing a test
-that "always" passes for a bug that never always failed.
+that "always" passes for a bug that never always failed. BUILD for this PLAN spawns
+`software-team:tdd-builder`, not the general builder — the regression test IS its first
+red step, written and confirmed failing before the fix, not added after.
 
 ## Unsettled requirements before PLAN
 
@@ -278,36 +284,23 @@ phase is in progress.
 
 ## Model routing
 
-Match the model primarily to the cost of a mistake (the risk tier), and secondarily to
-how much genuine reasoning the specific spawn needs (its complexity) — tier sets the
-floor, complexity can only push a spawn up from that floor, never below it.
+**Never spawn on a fixed default model.** Pick the model per spawn from the task's
+**difficulty**, always pass it explicitly as the `Model:` line and the `Agent` call's
+`model` parameter — never omit it and let a fixed default carry over from spawn to spawn.
+Difficulty picks the model; the risk tier from Step 2 sets a **floor** the difficulty
+pick can never go below. The model for a given spawn is whichever is stronger of the two.
 
-| Work | Model floor (by tier) | Why |
-|------|-------|-----|
-| T0 builder spawn, mechanical fact-gathering | Session default (fast tier) | Errors here are cheap and caught by your own diff read |
-| T1 build, review, and verify | Session default | The reviewer and verifier are the safety net; a stronger model buys little |
-| T2 build, review, and verify | **Opus** (strong tier) | A mistake in auth, migration, or deletion costs more than the tokens |
-| security-reviewer, any tier it's spawned at | Match the builder's tier for that task (session default on T1, opus on T2) | The security pass is only as trustworthy as the model reading the diff it's paired with |
-| documenter | Session default (fast tier) | Errors here are cheap — a wrong doc line is caught by the next reader, not a runtime failure |
-| deployer | Session default, regardless of tier | Its job is precise execution of an already-approved command, not judgment; a stronger model buys nothing when there's nothing left to decide |
-| designer, DESIGN mode | Session default; opus if the flow is genuinely novel (no comparable pattern in the codebase or the project's design.md) | Design-from-nothing needs more judgment than design-from-precedent |
-| designer, REVIEW mode | Match the paired reviewer's tier | Same reasoning as security-reviewer — it's reading the same diff at the same stakes |
-| Architecture and planning with real trade-offs, cross-cutting or hard-to-reverse designs, a stuck 3-round loop | **Fable** (top tier), spawned by you as a one-shot advisor (`Agent` call, `model: "fable"`, no edit tools) with a curated brief — never routine implementation | The plan is the highest-leverage artifact; the top tier never runs the routine loop |
+| Difficulty | Model | Signal |
+|---|---|---|
+| **Mechanical** | **Haiku** | Renaming a variable/symbol, fixing a typo or wording, reformatting, a single obvious substitution repeated identically across files — no logic decision anywhere in it |
+| **Simple** | **Sonnet** | A small, well-understood change following an existing pattern already in the codebase; acceptance criteria are crisp and mechanically checkable; no interacting logic across files |
+| **Complex / hard** | **Opus**, plus a mandatory one-shot Fable review of the finished diff before DONE (see below) | Any one of the signals below |
 
-Escalation across tiers is one-way within a task: if a task turns out riskier than
-classified, move up a tier and stay there. Skip the top-tier escalation entirely for
-routine implementation or obvious fixes — a gate that lets everything through costs more
-than it protects.
-
-**Complexity escalation, within a tier.** A tier's row above is a floor, not a fixed
-assignment — a task can be more complex than its risk tier implies, and the model should
-follow the complexity, not just the risk. Escalate one rung above the floor (session
-default → opus; T2's opus stays at opus, there is no rung above it except Fable's
-one-shot advisory role) for that specific spawn when at least one of these holds:
+Complex/hard triggers on any of:
 
 - The change genuinely interacts across more than ~3 files or modules — not 3 files that
-  each get the same mechanical edit (that's still simple), but 3+ files whose logic
-  depends on each other.
+  each get the same mechanical edit (that's still simple, still haiku/sonnet), but 3+
+  files whose logic depends on each other.
 - The work involves concurrency, an algorithmic subtlety, or a race/ordering condition —
   the kind of bug a fast pass reliably misses.
 - The acceptance criteria leave a real judgment call to the spawn rather than a
@@ -315,30 +308,66 @@ one-shot advisory role) for that specific spawn when at least one of these holds
   statement) — if you find yourself unable to write a crisp acceptance criterion, that
   itself is a complexity signal, not just a PLAN-quality problem.
 - A build/review/verify round already failed once on this task (round ≥ 2 in the
-  BUILD/REVIEW/VERIFY loop) — a second attempt at the session-default tier repeating the
-  first attempt's blind spot is the expensive failure mode; escalate the model for the
-  retry even if the tier itself doesn't change.
+  BUILD/REVIEW/VERIFY loop) — a second attempt repeating the first attempt's blind spot
+  at the same model is the expensive failure mode; escalate for the retry even if the
+  tier itself doesn't change.
+- Architecture or planning with real trade-offs, or a cross-cutting/hard-to-reverse
+  design — this was already routed to a Fable planning consult below; treat it as
+  complex/hard for model purposes too.
 
-This lever is orthogonal to Step 2's risk classification: it can raise a T1 spawn's model
-above the T1 floor, but it never lowers a T2 spawn below opus, and it never substitutes
-for T2's mandatory human approval gate. Note the reason for the escalation in the spawn's
-`Context:` line so the report back explains why a "standard" task got a stronger model.
+**Tier floor, by risk (Step 2), never undercut by a "simple-looking" difficulty call:**
 
-**Consulting Fable.** Gate first — consult only for a genuine architecture/design
-trade-off, cross-cutting or hard-to-reverse work, or a BUILD/REVIEW/VERIFY loop stuck
-after 2 failed rounds; skip it for routine implementation or an obvious fix (state the
-one-line reason for skipping or consulting, same as any other judgment call in this
-skill), and skip the gate entirely — consult immediately — if the human explicitly asked
-for Fable. When it's warranted: spawn Fable once with a self-contained brief — the goal,
-constraints quoted from the human verbatim (not paraphrased), what's already known, and
-the specific question, with "state your assumptions instead of asking questions back"
-explicit in the prompt, since a subagent starts cold and cannot interrupt you to ask.
-Give that spawn no `Write`/`Edit` tools — a read-only/plan-type agent, if your
-environment offers one — because Fable plans, it does not implement. Treat what comes
-back as advice, not authority: the human's explicit instructions always win over Fable's
-plan on conflict, and any open question the plan flags goes to the human before BUILD,
-never guessed at. Budget about two Fable calls per task (one consult, one follow-up if
-genuinely stuck) before checking with the human whether to keep spending on it.
+| Tier | Floor |
+|---|---|
+| T0 | Haiku |
+| T1 | Sonnet |
+| T2 | **Opus** — and every T2 spawn is complex/hard by definition for the Fable-review rule below, regardless of whether the difficulty signals above also fire |
+
+Escalation is one-way within a task in both directions: if a task turns out riskier than
+classified, move the tier up and stay there; if a spawn's difficulty turns out higher
+than first read, move the model up and stay there for the rest of that task. Never
+downgrade either mid-task to save cost. Note the reason for the model chosen — mechanical
+/ simple / complex, plus which signal if complex — in the spawn's `Context:` line, so the
+report back explains why a given task got the model it got.
+
+**Other roles' model:** `security-reviewer` matches the builder's model for that spawn
+(the security pass is only as trustworthy as the model reading the same diff);
+`documenter` is always haiku (a wrong doc line is caught by the next reader, not a
+runtime failure); `deployer` is always haiku regardless of tier (its job is precise
+execution of an already-approved command, not judgment — a stronger model buys nothing
+when there's nothing left to decide); `designer` in DESIGN mode follows the difficulty
+scale above (haiku for a trivial layout tweak, opus for a genuinely novel flow with no
+comparable pattern to follow), and in REVIEW mode matches the paired reviewer's model.
+
+**Mandatory Fable review for complex/hard work.** Any spawn built at opus — whether from
+a T2 risk floor or a complexity escalation within T1 — gets one Fable review pass on the
+**finished, already-verified diff** before DONE, in addition to the normal
+reviewer/verifier: spawn Fable once, no `Write`/`Edit` tools, with the diff, the
+acceptance criteria, and the question "does this hold up — anything a top-tier read would
+catch that the standard review pass might not?" Treat what comes back as a finding to
+weigh, not a verdict: a real concern routes back to BUILD like any other REVIEW
+`CHANGES REQUIRED` (counts toward the shared 3-round cap in
+`## When BUILD/REVIEW/VERIFY can't converge`); nothing found closes DONE as normal, and
+say so plainly rather than treating a clean Fable review as extra ceremony to report at
+length.
+
+**Consulting Fable for planning.** Separately from the mandatory review above, gate a
+*planning* consult first — only for a genuine architecture/design trade-off, cross-cutting
+or hard-to-reverse work, or a BUILD/REVIEW/VERIFY loop stuck after 2 failed rounds; skip
+it for routine implementation or an obvious fix (state the one-line reason for skipping
+or consulting), and skip the gate entirely — consult immediately — if the human explicitly
+asked for Fable. When it's warranted: spawn Fable once with a self-contained brief — the
+goal, constraints quoted from the human verbatim (not paraphrased), what's already known,
+and the specific question, with "state your assumptions instead of asking questions back"
+explicit in the prompt, since a subagent starts cold and cannot interrupt you to ask. Give
+that spawn no `Write`/`Edit` tools — a read-only/plan-type agent, if your environment
+offers one — because Fable plans, it does not implement. Treat what comes back as advice,
+not authority: the human's explicit instructions always win over Fable's plan on
+conflict, and any open question the plan flags goes to the human before BUILD, never
+guessed at. Budget about two planning calls per task (one consult, one follow-up if
+genuinely stuck) before checking with the human whether to keep spending on it — this
+budget is separate from the mandatory complex/hard review above, which isn't optional
+once the gate fires, but still don't chain more than one review pass per BUILD round.
 
 ## The roles
 
@@ -347,6 +376,7 @@ genuinely stuck) before checking with the human whether to keep spending on it.
 | **Orchestrator** (you) | Classifies, routes, delegates, integrates, reports | **Edits a project file — ever, at any tier.** Verifies or approves a build |
 | **Researcher** — spawn `software-team:researcher` | Gathers facts, including via read-only diagnostic Bash (existing tests, a repro script, requests against a running instance); every claim carries a `file:line` or command-output citation | Makes decisions; edits a tracked file |
 | **Builder** — spawn `software-team:builder` | Implements the approved plan against explicit acceptance criteria | Verifies its own work; weakens a failing check to get green |
+| **TDD builder** — spawn `software-team:tdd-builder` | Same contract as builder, through red → green → refactor per criterion — a failing test confirmed to fail for the right reason, before any production code | Writes code before its test; writes a test after the code already works and calls it TDD |
 | **Reviewer** — spawn `software-team:reviewer` | Reads the diff against a 5-category checklist (correctness, security, performance, impact, plan conformance); verdict `APPROVED`/`CHANGES REQUIRED` | Edits anything; approves without a per-category evidence line |
 | **Verifier** — spawn `software-team:verifier` | Independently executes and validates against the **same acceptance criteria the builder received** — never a paraphrase | Trusts the builder's summary over the actual diff and test output |
 | **Security reviewer** — spawn `software-team:security-reviewer` | A dedicated OWASP-class pass (injection, access control, auth, secrets, deserialization, SSRF, misconfig); verdict `CLEAR`/`FINDINGS` | Edits anything; substitutes for the standard reviewer's broader checklist |
@@ -357,7 +387,7 @@ genuinely stuck) before checking with the human whether to keep spending on it.
 Spawn these agent types by name (`software-team:builder`, not a bare `builder` — a
 same-named agent elsewhere in the registry is a different agent with a weaker contract).
 
-Use this template for every builder/reviewer/verifier/security-reviewer/designer spawn
+Use this template for every builder/tdd-builder/reviewer/verifier/security-reviewer/designer spawn
 (designer's REVIEW mode uses it exactly like the reviewer; DESIGN mode reuses the same
 fields, with `Acceptance criteria:` describing what the resulting spec must satisfy
 rather than what to verify, and no `Verify with:` line):
@@ -502,6 +532,9 @@ A task is DONE only when, in this order:
    `software-team:deployer`, with its exit code and resulting state recorded — never
    report DONE on a task whose own scope included shipping it if that step didn't
    actually run.
+10. **Fable review, for any spawn that ran at opus** — per `## Model routing`'s mandatory
+    complex/hard rule, whether opus was reached via T2's risk floor or a complexity
+    escalation. Its finding (clean, or routed back through a fix round) is recorded here.
 
 Report completion plainly with the evidence. On T1/T2, close with a compact
 **traceability summary** — one line per requirement: requirement → task(s) → reviewer

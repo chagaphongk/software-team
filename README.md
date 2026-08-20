@@ -2,8 +2,9 @@
 
 A Claude Code plugin that runs a task through a real engineering office — an
 orchestrator that classifies risk and delegates, plus spawned `researcher` / `builder` /
-`reviewer` / `security-reviewer` / `documenter` / `verifier` / `deployer` / `designer`
-subagents — instead of one Claude instance role-playing hats in a single conversation.
+`tdd-builder` / `reviewer` / `security-reviewer` / `documenter` / `verifier` / `deployer`
+/ `designer` subagents — instead of one Claude instance role-playing hats in a single
+conversation.
 The orchestrator never edits a project file itself, at any tier: even a one-character fix
 goes through a spawned builder, so the guard hooks and the agent log can prove delegation
 happened rather than trusting a transcript. The same invariant covers shipping: deploy,
@@ -60,10 +61,18 @@ inline, no reviewer round trip.
   performance/impact/plan-conformance checklist.
 - **Parallel by default when scopes are disjoint** — multiple independent builders, or a
   reviewer/security-reviewer/designer all reading the same finished diff, spawn in one
-  batch instead of one at a time. Complexity within a tier (many interacting files,
-  concurrency, an ambiguous judgment call, a second attempt after a failed round) can
-  escalate a spawn's model up from its tier's floor — the tier is a floor, not a fixed
-  assignment.
+  batch instead of one at a time.
+- **Model picked per spawn by difficulty, never a fixed default** — mechanical work
+  (rename, typo/text fix) gets Haiku, a small well-understood change gets Sonnet, and
+  anything complex (many interacting files, concurrency, a real judgment call, a failed
+  round) gets Opus plus a mandatory one-shot Fable review of the finished diff before
+  DONE. The risk tier from Step 2 still sets a floor the difficulty pick can't undercut —
+  T2 is always at least Opus.
+- **A dedicated TDD builder** — `software-team:tdd-builder` spawns instead of the general
+  builder whenever the plan calls for TDD or the task is a bug fix, and implements
+  strictly through red (a test confirmed to fail for the right reason) → green (the
+  minimum code to pass it) → refactor (tests kept green throughout), reporting the actual
+  red/green trail per criterion as evidence, not just the final passing state.
 - **Deterministic guard hooks** — `hooks/guard_bash.py` blocks force-push, `git reset
   --hard`, `git clean -f`, and destructive shell reads of secrets; `hooks/guard_secrets.py`
   blocks Read/Edit/Write of `.env*`, key files, and `credentials.*`; `hooks/log_agent.py`
