@@ -1,0 +1,29 @@
+{
+  "name": "software-team",
+  "version": "0.1.0",
+  "description": "Disciplined engineering-office workflow: risk-tier routing, RESEARCH -> PLAN -> BUILD -> REVIEW -> VERIFY, evidence-backed claims, human approval gates, and deterministic guard hooks -- adapted for Codex's native collaboration.spawn_agent instead of named subagent personas.",
+  "author": {
+    "name": "chagaphong"
+  },
+  "homepage": "https://github.com/chagaphongk/software-team",
+  "repository": "https://github.com/chagaphongk/software-team",
+  "license": "MIT",
+  "keywords": ["engineering-office", "risk-tier", "subagent", "code-review", "delegation"],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "Software Team",
+    "shortDescription": "Disciplined engineering-office workflow with risk-tier subagent delegation",
+    "longDescription": "Classifies every task by risk tier, then runs RESEARCH -> PLAN -> BUILD -> REVIEW -> VERIFY through collaboration.spawn_agent, with each role's full contract inlined at spawn time (Codex has no named-persona agent file, unlike Claude Code). Evidence-backed claims, human approval gates for irreversible actions, and deterministic guard hooks for destructive commands and secret files.",
+    "developerName": "chagaphong",
+    "category": "Productivity",
+    "capabilities": ["Instructions", "Lifecycle hooks"],
+    "websiteURL": "https://github.com/chagaphongk/software-team",
+    "defaultPrompt": [
+      "Use the software-team office to fix this bug.",
+      "Run the software-team workflow for this feature.",
+      "Review this diff as the office reviewer."
+    ],
+    "brandColor": "#1F2937"
+  }
+}

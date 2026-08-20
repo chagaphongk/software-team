@@ -1,0 +1,14 @@
+{
+  "name": "software-team-codex-marketplace",
+  "description": "Codex CLI port of software-team: risk-tier office workflow with roles inlined into collaboration.spawn_agent task messages.",
+  "owner": {
+    "name": "chagaphong"
+  },
+  "plugins": [
+    {
+      "name": "software-team",
+      "source": "./",
+      "description": "Disciplined engineering-office workflow ported to Codex's collaboration.spawn_agent, with all 9 role contracts inlined in references/roles.md."
+    }
+  ]
+}

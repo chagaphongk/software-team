@@ -193,6 +193,65 @@ launches non-interactively and shows a "trust this folder" prompt anyway, set
 - `evals/evals.json` was not ported (benchmark harness, not required for the extension to
   function).
 
+## Codex CLI port
+
+`codex-extension/` is a parallel port to Codex's own plugin format
+(`.codex-plugin/plugin.json` + `skills/software-team/SKILL.md` + `hooks/hooks.json`), for
+people who use OpenAI Codex CLI instead of (or alongside) Claude Code. This port required
+a real architecture change, not just a file-format translation: **Codex has no
+plugin-declarable named-persona agent file** (confirmed against the official Codex plugin
+manifest schema — no `agents` field exists). Its native subagent primitive,
+`collaboration.spawn_agent`, takes a task message and an optional `fork_turns: "none"` for
+fresh context, but has no system-prompt/persona parameter (confirmed empirically via a
+sandboxed, read-only `codex exec` probe on 2026-08-20). So instead of an `agents/`
+directory, `skills/software-team/references/roles.md` holds all 9 role contracts
+(builder, tdd-builder, reviewer, security-reviewer, verifier, researcher, documenter,
+deployer, designer) as text to copy verbatim into the spawn's task message — the office's
+state machine, tiers, and hard rules are otherwise unchanged.
+
+**Installed and confirmed loading live** (2026-08-20): registered as its own marketplace
+(`codex-extension/` carries a self-contained `.claude-plugin/marketplace.json` +
+`.codex-plugin/plugin.json` pair — it cannot share the repo root's Claude marketplace,
+because Codex's `skills` manifest field is validated to resolve to the literal path
+`skills`, so co-locating with Claude would force both hosts to read the exact same
+`skills/software-team/SKILL.md`, and the two hosts' spawn semantics are incompatible).
+Install with:
+
+```
+codex plugin marketplace add /path/to/software-team/codex-extension
+codex plugin add software-team@software-team-codex-marketplace
+```
+
+A sandboxed, read-only, ephemeral `codex exec` probe against a fresh session afterward
+confirmed the skill actually loads (`software-team:software-team` appeared in the
+session's skill list with the matching description).
+
+**Known gaps in this port, disclosed rather than glossed over** (full detail in
+`codex-extension/hooks/PORT_NOTES.md`):
+- No `commands/` support on Codex (confirmed — not in the official plugin manifest
+  schema) — there is no `/software-team:workflow` or `/software-team:decision` slash
+  command on this port; read `docs/decisions.md` and `.software-team/state/agent-log.jsonl`
+  directly instead.
+- No per-spawn model-tier selection confirmed on `collaboration.spawn_agent` — every
+  sub-agent runs on whatever model the top-level session uses; the port flags where the
+  Claude version would escalate model tier instead of silently dropping the signal.
+- **Hooks did not confirm firing**, even though `.codex-plugin/plugin.json` declares
+  `"hooks": "./hooks/hooks.json"` and real `codex plugin add` ingestion accepts that field
+  (the local `plugin-creator` skill's scaffold validator rejects it — a stricter/staler
+  check than actual ingestion, confirmed by this real install). Two sandboxed `codex exec`
+  probes after install showed other already-trusted plugins' hooks firing
+  (`SessionStart`/`UserPromptSubmit`/`Stop`) but no `software-team` entry ever appeared in
+  `~/.codex/config.toml`'s `[hooks.state]` — most likely an interactive first-use
+  hook-trust gate that a non-interactive `--ephemeral --approval never` session can't
+  satisfy (`--dangerously-bypass-hook-trust` exists for exactly this, and wasn't used
+  since it's explicitly flagged dangerous and wasn't asked for). Test this yourself in an
+  **interactive** Codex session — trigger a blocked command and confirm rejection —
+  before trusting the guard hooks for anything security-sensitive.
+- Hook payload field names (`tool_input.command`, `tool_input.file_path`,
+  `hook_event_name`, `agent_type`, `session_id`) are parsed defensively across several
+  plausible key names, same approach as the Gemini CLI port, since Codex's exact shape
+  wasn't confirmed live.
+
 ## Related
 
 [agent-office](https://github.com/chagaphongk/agent-office) — the leaner Claude Code
