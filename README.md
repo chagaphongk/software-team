@@ -43,7 +43,16 @@ inline, no reviewer round trip.
 - **Bugs get a root-cause pass, unsettled requirements get a clarification pass** — both
   fully self-contained (reproduce/trace/hypothesize-and-falsify/cross-reference for a
   bug; state-understanding/surface-every-fork/stop-and-wait for unsettled scope), before
-  PLAN drafts anything.
+  PLAN drafts anything. Brand-new, large-scope requirements route to a brainstorming
+  skill first when one is installed, then return with settled input for PLAN; work too
+  big for one session prefers `wayfinder`'s decision-ticket map over the in-repo Phase
+  Map when installed — either way, the office loop (PLAN → BUILD → REVIEW → VERIFY) is
+  what actually builds each settled piece, never bypassed by the hand-off.
+- **Stack-aware skill selection** — `references/skill-routing.md` detects the framework
+  from the repo (not the request) and loads the matching skill for the builder (e.g.
+  Next.js → `nextjs-developer`, plain React → `react-expert`), with an example mapping
+  table as a starting point and a verify-against-installed-list rule so a stale example
+  never gets loaded blind.
 - **Risk-tier routing (T0/T1/T2)** — T0 still spawns a builder (Haiku, orchestrator
   verifies by diff); T1 always gets an independent verifier; T2 requires human plan
   approval, opus-tier subagents, a mandatory reviewer plus security-reviewer, and a
@@ -86,7 +95,7 @@ inline, no reviewer round trip.
 
 ## Install
 
-Requires `python3` on `PATH` (the hooks use it). Current version: `0.1.0`.
+Requires `python3` on `PATH` (the hooks use it). Current version: `0.1.1`.
 
 1. Register the marketplace, once per machine:
 
