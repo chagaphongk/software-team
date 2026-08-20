@@ -1,0 +1,14 @@
+{
+  "name": "software-team-marketplace",
+  "description": "Always-delegate engineering-office workflow: risk tiers, real subagent delegation with a mandatory builder even on trivial tasks, a dedicated reviewer role, and deterministic guard hooks.",
+  "owner": {
+    "name": "chagaphong"
+  },
+  "plugins": [
+    {
+      "name": "software-team",
+      "source": "./",
+      "description": "Disciplined engineering-office workflow: risk tiers, RESEARCH → PLAN → BUILD → REVIEW → VERIFY, orchestrator never edits project files itself, builder/reviewer/verifier separation, evidence-backed claims, human approval gates, and guard hooks enforced by the harness."
+    }
+  ]
+}

@@ -1,46 +1,47 @@
 {
-  "skill_name": "ai-software-team",
+  "skill_name": "software-team",
+  "note": "Adapted from ai-software-team's single-conversation evals for the real-subagent architecture. Assertions updated to check for actual delegation (spawned builder/reviewer/verifier, not role-play text) — re-baseline pending a fresh with-skill vs no-skill run against this version.",
   "evals": [
     {
       "id": 1,
       "eval_name": "eval-build-feature",
       "prompt": "Write a Python function `is_valid_email(addr: str) -> bool` that validates email addresses using a reasonable regex, plus a pytest test file covering valid and invalid cases. Keep it simple, no external deps.",
-      "expected_output": "A plan with acceptance criteria presented and approval requested before code is written; then a working function + pytest file with at least one negative test case; verification evidence (tests actually run) or an explicit not-verifiable statement.",
+      "expected_output": "A plan with acceptance criteria presented and approval requested before code is written; a `software-team:builder` subagent spawned to implement it (not written inline by the orchestrator); a `software-team:verifier` subagent spawned and its PASS/FAIL/BLOCKED verdict with evidence reported back.",
       "files": [],
       "assertions": [
-        "gate1_explicit_stop: turn ends with an explicit approval question before any code is produced",
+        "plan_gate_explicit_stop: turn ends with an explicit approval question before any code is produced",
         "acceptance_criteria_present: plan states concrete, checkable acceptance criteria (not vague phrasing like 'handles errors well')",
+        "builder_spawn_evidenced: response shows a software-team:builder subagent was spawned to write the code, not the orchestrator editing files directly",
         "includes_negative_test: test suite includes at least one case expected to fail (invalid email input)",
-        "verifier_verdict_present: response contains an explicit VERIFIED / FAILED / NOT VERIFIABLE HERE verdict with evidence or a run-it-yourself checklist",
-        "audit_log_present: response includes an explicit accumulated audit log section"
+        "verifier_verdict_present: response contains an explicit PASS / FAIL / BLOCKED verdict with evidence from a software-team:verifier spawn"
       ]
     },
     {
       "id": 2,
       "eval_name": "eval-design-api",
       "prompt": "Design a REST API for a meeting-room booking system. Must prevent double-booking. Give me the endpoints, request/response shapes, and key data model. No need to write code yet.",
-      "expected_output": "A plan/design presented with an explicit approval gate before being treated as final; endpoints + data model that concretely address the double-booking race condition (e.g. unique constraint, optimistic locking, transactional check); acceptance criteria per task; audit log.",
+      "expected_output": "A plan/design presented with an explicit approval gate before being treated as final; endpoints + data model that concretely address the double-booking race condition (e.g. unique constraint, optimistic locking, transactional check); acceptance criteria per task.",
       "files": [],
       "assertions": [
-        "gate1_explicit_stop: turn ends with an explicit approval question before the design is treated as final",
+        "plan_gate_explicit_stop: turn ends with an explicit approval question before the design is treated as final",
         "acceptance_criteria_present: plan states concrete, checkable acceptance criteria",
         "prevents_double_booking: design names a concrete mechanism preventing double-booking (unique constraint, optimistic lock, transactional check) not just 'validate no conflicts'",
         "includes_data_model: response defines key entities (e.g. Room, Booking) with fields",
-        "audit_log_present: response includes an explicit accumulated audit log section"
+        "no_premature_build: since this is design-only, no builder subagent is spawned before the design gate is approved"
       ]
     },
     {
       "id": 3,
       "eval_name": "eval-code-review",
       "prompt": "Please seriously review this Python login rate-limiter for security issues:\n\n```python\nimport time\n\nattempts = {}\n\ndef check_login(username, password, correct_password):\n    now = time.time()\n    if username in attempts:\n        last_time, count = attempts[username]\n        if count >= 5 and now - last_time < 60:\n            return False, \"Too many attempts\"\n    if password == correct_password:\n        attempts.pop(username, None)\n        return True, \"OK\"\n    else:\n        last_time, count = attempts.get(username, (now, 0))\n        attempts[username] = (now, count + 1)\n        return False, \"Invalid credentials\"\n```",
-      "expected_output": "A review with an explicit APPROVED/CHANGES REQUIRED verdict, each checklist category backed by one line of evidence, and it must catch the two real bugs: plaintext '==' password comparison (timing attack, should use hmac.compare_digest) and the unbounded 'attempts' dict (memory leak / never evicts old usernames).",
+      "expected_output": "A software-team:reviewer subagent spawned directly (no PLAN gate, read-only deliverable) with an explicit APPROVED/CHANGES REQUIRED verdict, each checklist category backed by one line of evidence, catching the two real bugs: plaintext '==' password comparison (timing attack, should use hmac.compare_digest) and the unbounded 'attempts' dict (memory leak / never evicts old usernames).",
       "files": [],
       "assertions": [
+        "reviewer_spawn_evidenced: a software-team:reviewer subagent was spawned for the review rather than the orchestrator reviewing inline",
         "reviewer_verdict_present: review opens with an explicit APPROVED / CHANGES REQUIRED verdict",
         "identifies_timing_attack: flags the plaintext '==' password comparison as a timing-attack risk and recommends a constant-time comparison",
         "identifies_unbounded_memory: flags that the 'attempts' dict is never cleared for failed/abandoned usernames, causing unbounded memory growth",
-        "evidence_per_category: each checklist category (correctness/security/performance/impact) is backed by a one-line evidence statement, not just a label",
-        "audit_log_present: response includes an explicit accumulated audit log section"
+        "evidence_per_category: each checklist category (correctness/security/performance/impact/plan conformance) is backed by a one-line evidence statement, not just a label"
       ]
     }
   ]

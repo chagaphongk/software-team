@@ -1,102 +1,84 @@
-# ai-software-team
+# software-team
 
-A Claude Code skill that runs a task as a five-role "team" — Researcher, Architect,
-Developer, Reviewer, Verifier — inside a single conversation. One Claude instance
-switches hats, with human approval gates between planning and building, instead of
-answering in one unchecked pass. No subagents are spawned; it works anywhere Claude Code
-runs, with or without Task-tool access.
+A Claude Code plugin that runs a task through a real engineering office — an
+orchestrator that classifies risk and delegates, plus spawned `researcher` / `builder` /
+`reviewer` / `verifier` subagents — instead of one Claude instance role-playing hats in a
+single conversation. The orchestrator never edits a project file itself, at any tier: even
+a one-character fix goes through a spawned builder, so the guard hooks and the agent log
+can prove delegation happened rather than trusting a transcript.
 
-## Why
+## Why this exists next to `agent-office`
 
-Answering a non-trivial task in one pass tends to skip two things: a plan the human
-signs off on before code gets written, and an independent check that the result actually
-does what was asked. This skill forces both, at the cost of an extra turn.
+[agent-office](https://github.com/chagaphongk/agent-office) already does real subagent
+delegation with risk-tier routing. `software-team` is its stricter sibling, not a
+replacement — both stay published. Reach for `software-team` specifically when you want:
 
-## When to use this vs. a real subagent-orchestration skill
+- **Zero self-edit, every tier.** agent-office lets the orchestrator handle T0 (typos,
+  trivial single-file changes) inline. `software-team` spawns a builder even for that —
+  the always-delegate invariant is the point.
+- **A dedicated reviewer.** agent-office folds review into VERIFY. `software-team` runs a
+  separate `reviewer` subagent against a 5-category checklist (correctness, security,
+  performance, impact, plan conformance) before the verifier executes anything.
+- **Hooks installed by default.** Destructive-command blocking, secret-file blocking, and
+  subagent-spawn logging ship as first-class plugin hooks (`hooks/hooks.json`), not an
+  opt-in `examples/` folder you wire up yourself.
 
-If your setup also has a skill that dispatches *real* subagents (risk-tier
-classification, parallel researcher/builder/verifier delegation, tiered model routing —
-e.g. [agent-office](https://github.com/chagaphongk/agent-office)), prefer that one for
-multi-file builds, large migrations, or anything that benefits from real parallel
-delegation.
-
-Reach for `ai-software-team` instead when:
-- You want the audit trail and gate discipline of a single inspectable turn.
-- No subagent/Task-tool access is available in this environment.
-- It's a quick review/critique or a non-code deliverable (design doc, data analysis,
-  spec) that benefits from a plan-then-review pass without the overhead of real
-  delegation.
+Reach for `agent-office` instead when you want the leaner default — trivial work handled
+inline, no reviewer round trip.
 
 ## What it does
 
-- **Five roles, one conversation** — Researcher gathers facts (skippable when context is
-  already complete), Architect plans with explicit per-task acceptance criteria,
-  Developer builds, Reviewer inspects against a 5-category checklist
-  (correctness/security/performance/impact/plan-conformance), Verifier actually runs the
-  result rather than trusting the report.
-- **Three approval gates** — GATE 1 (plan approval, before any code is written), GATE 2
-  (escalation to the user if 3 rounds of review/fix don't converge), GATE 3 (delivery
-  summary + final confirmation with a traceability line per requirement).
-- **Read-only deliverables skip GATE 1** — a code review, security audit, or design
-  critique has nothing to build, so there's no action for the gate to protect; the
-  Reviewer's findings are the deliverable, produced directly in turn one.
-- **Anti-rubber-stamp rules** — a bare `APPROVED` is invalid; every checklist category
-  needs a one-line evidence statement, findings or not. Verification needs a negative
-  test, not just happy-path checks, and an honest `NOT VERIFIABLE HERE` when execution
-  isn't possible beats a fabricated "it works."
-- **Optional subagent hand-off** — if a spawn tool is available, the Reviewer/Verifier
-  pass may delegate to a fresh-context subagent given the same acceptance criteria, to
-  avoid the same context reviewing its own blind spots. Not required — this is a
-  strengthening, not a dependency.
+- **RESEARCH → PLAN → BUILD → REVIEW → VERIFY** — real subagents at every step past
+  RESEARCH, spawned by name (`software-team:builder`, not a bare `builder`).
+- **Risk-tier routing (T0/T1/T2)** — T0 still spawns a builder (fast model, orchestrator
+  verifies by diff); T1 always gets an independent verifier; T2 requires human plan
+  approval, opus-tier subagents, and a mandatory reviewer.
+- **Read-only deliverables skip the plan gate** — a code review or audit spawns
+  `software-team:reviewer` directly; its findings are the deliverable.
+- **Deterministic guard hooks** — `hooks/guard_bash.py` blocks force-push, `git reset
+  --hard`, `git clean -f`, and destructive shell reads of secrets; `hooks/guard_secrets.py`
+  blocks Read/Edit/Write of `.env*`, key files, and `credentials.*`; `hooks/log_agent.py`
+  writes every subagent start/stop to `.claude/state/agent-log.jsonl`; `hooks/pre_compact.py`
+  marks context-compaction events so `/software-team:workflow` knows to re-read
+  `docs/decisions.md` instead of trusting compacted memory.
+- **`/software-team:workflow`** — reports tier/state/verdicts from the hook-written log,
+  not conversation memory. **`/software-team:decision`** — appends a one-line,
+  course-changing decision to `docs/decisions.md`.
 
 ## Install
 
+Requires `python3` on `PATH` (the hooks use it).
+
 ```
-git clone https://github.com/chagaphongk/ai-software-team.git
-bash ai-software-team/scripts/install.sh              # -> ~/.claude/skills/ai-software-team
-bash ai-software-team/scripts/install.sh --project     # -> ./.claude/skills/ai-software-team (this repo only)
+/plugin marketplace add chagaphongk/software-team
+/plugin install software-team@software-team-marketplace
 ```
 
-Or skip the script — copy `SKILL.md` (and `evals/` if you want the benchmark) into your
-skills directory by hand. That's the whole install either way: no plugin manifest, no
-dependencies. Re-run the script to update an existing install after a `git pull`.
+For local development, point the marketplace at a clone instead:
+
+```
+/plugin marketplace add /path/to/software-team
+/plugin install software-team@software-team-marketplace
+```
+
+If you previously copy-installed the old single-conversation `ai-software-team` skill
+(`~/.claude/skills/ai-software-team` or `./.claude/skills/ai-software-team`), remove that
+directory — otherwise both the old and new skill are live and can trigger-collide.
+
+Update with `claude plugin update software-team`. Recommended: add the same
+`permissions.deny` block agent-office documents for `.env*` / `*.pem` / `*.key` /
+`id_rsa*` files in your own `settings.json` — the plugin's hooks are the second guard
+layer, not a substitute for the harness-level deny rule.
 
 ## Benchmark
 
-Evaluated with-skill vs a no-skill baseline on 3 evals (build a function + tests, design
-a REST API with a double-booking constraint, security-review an existing rate limiter),
-graded on 5 hand-written assertions each. Full run history and reasoning in
-`evals/evals.json` and the iteration workspace.
-
-| Eval | With skill | Baseline |
-|---|---|---|
-| build-feature | 3/5 (60%) | 1/5 (20%) |
-| design-api | 4-5/5 (80-100%, run variance) | 2/5 (40%) |
-| code-review | 5/5 (100%) | 2/5 (40%) |
-| **Aggregate** | **~80%** | **~33%** |
-
-Two real bugs were found and fixed this way, not by inspection:
-
-1. **GATE 1 was blocking read-only reviews.** The first version forced a plan-approval
-   gate even for "review this code" requests, so it delivered zero review content in
-   turn one — the no-skill baseline beat it outright on that eval. Fixed by adding the
-   read-only-deliverable exception above; re-test went from 1/5 to 4/5 with no regression
-   on the other two evals.
-2. **Reviewer findings didn't map back to the stated checklist.** Findings were ordered
-   by severity but never tagged by category, so the anti-rubber-stamp rule ("every
-   category needs evidence") was unenforceable in practice. Fixed by adding an explicit
-   output-shape example (severity-ordered findings tagged `[Category]`, closed by a
-   per-category evidence block); re-test went 4/5 → 5/5.
-
-A side effect of the second fix: the with-skill code-review run started writing and
-executing real proof-of-concept code to back its findings instead of reasoning
-statically, and caught a bug (a non-decaying lockout counter enabling a permanent
-denial-of-service against any known username) that neither the original run nor the
-baseline found.
+The old single-conversation skill was evaluated with-skill vs. no-skill baseline on 3
+evals (aggregate ~80% vs ~33%) — see `docs/decisions.md` and git history for that run.
+This version's evals (`skills/software-team/evals/evals.json`) were adapted to check for
+actual subagent delegation instead of in-transcript role-play text; a fresh baseline run
+against this architecture is pending.
 
 ## Related
 
-[agent-office](https://github.com/chagaphongk/agent-office) — the real-subagent
-orchestration counterpart to this skill. Several rules here (the read-only-deliverable
-gate skip, the negative-test requirement, the 3-round escalation, the traceability
-summary) were upstreamed there after this benchmark surfaced them.
+[agent-office](https://github.com/chagaphongk/agent-office) — the leaner sibling; T0
+handled inline, no dedicated reviewer.
