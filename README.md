@@ -44,9 +44,10 @@ inline, no reviewer round trip.
   fully self-contained (reproduce/trace/hypothesize-and-falsify/cross-reference for a
   bug; state-understanding/surface-every-fork/stop-and-wait for unsettled scope), before
   PLAN drafts anything.
-- **Risk-tier routing (T0/T1/T2)** — T0 still spawns a builder (fast model, orchestrator
+- **Risk-tier routing (T0/T1/T2)** — T0 still spawns a builder (Haiku, orchestrator
   verifies by diff); T1 always gets an independent verifier; T2 requires human plan
-  approval, opus-tier subagents, and a mandatory reviewer plus security-reviewer.
+  approval, opus-tier subagents, a mandatory reviewer plus security-reviewer, and a
+  mandatory Fable review of the finished diff.
 - **Read-only deliverables skip the plan gate** — a code review or audit spawns
   `software-team:reviewer` (or `software-team:security-reviewer` for a security-focused
   ask) directly; its findings are the deliverable.
