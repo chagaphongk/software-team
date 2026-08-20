@@ -25,8 +25,8 @@ question nobody has settled.
 
 | Signal in the request | Where it goes |
 |---|---|
-| A bug, a failing test, behavior nobody can explain | Spawn `software-team:researcher` to reproduce and trace the actual failing path first — never plan a fix from the symptom alone |
-| New feature where the requirements themselves are unsettled | Ask the human what's unsettled before drafting PLAN, per `## Asking the human` — the office cannot verify against criteria that don't exist yet |
+| A bug, a failing test, behavior nobody can explain | See `## Debugging before PLAN` below — reproduce and trace the real cause before drafting anything |
+| New feature where the requirements themselves are unsettled | See `## Unsettled requirements before PLAN` below — the office cannot verify against criteria that don't exist yet |
 | A loose idea, too big for one session, foggy about its own destination | See `## When PLAN doesn't fit one session` below — don't draft a plan yet |
 | A written plan or spec ready to execute | The office loop, so BUILD gets an independent REVIEW and VERIFY |
 | A read-only deliverable: a code review, an audit, a design critique | Skip PLAN, spawn `software-team:reviewer` (or `software-team:designer` in REVIEW mode for a UX-focused critique) directly — see the read-only exception in Step 3 |
@@ -141,6 +141,71 @@ Integrate results only after a parallel batch fully returns — read every repor
 deciding the next step, the same as a single spawn. A parallel batch does not relax any
 other rule in this skill: each stream still needs its own acceptance criteria, its own
 verification, and the same evidence discipline as if it had run alone.
+
+## Debugging before PLAN
+
+A bug report names a symptom, not a cause. Route it through this before drafting
+anything — spawn `software-team:researcher` with these steps as its `Task:` (it holds
+`Bash` for exactly this: running a repro script, existing tests, or requests against a
+running instance is investigation, not building — see its contract). Do the steps
+yourself only for a repro so trivial there's nothing to delegate. Don't let PLAN start
+until step 3 has actually happened, not just been assumed:
+
+1. **Reproduce** — get a reliable repro first: the exact input/command/request that
+   triggers it, confirmed to actually fail. A fix for a bug you haven't reproduced is a
+   guess wearing a diff. **If the failure is intermittent or timing-dependent** (a race,
+   a flake, "sometimes"), a single pass/fail proves nothing — state a hit rate over N
+   repeated attempts (e.g. "12/50 failed with a 50ms stagger between two concurrent
+   requests"), varying the relevant parameter (delay, concurrency, load) across the runs
+   instead of repeating one identical case.
+2. **Trace** — follow the real failure path: the actual stack trace or error output, not
+   an assumed one; read the code the trace actually passes through, not the code you'd
+   expect it to pass through. For a concurrency bug, trace specifically for where an
+   "already happened" guard exists (or should) and whether it sits before or after the
+   operation it's meant to guard.
+3. **Hypothesize, then falsify** — form one concrete hypothesis for the root cause, then
+   try to prove it wrong before believing it. Pick the falsification method the bug
+   shape actually allows: a targeted log line or a minimal isolating test for a
+   deterministic bug; **for a race or timing bug, use logging plus repeated automated
+   runs, never a debugger break** — pausing execution changes the timing window you're
+   trying to observe, so it can hide the very race you're testing for. A hypothesis that
+   survives an honest attempt to break it is worth building a fix on.
+4. **Cross-reference** — check whether the same root cause reaches other callers or
+   paths: grep for the pattern elsewhere, check `git blame`/history for when it was
+   introduced, check for related past fixes. A fix scoped only to the reported symptom
+   leaves siblings broken.
+
+Once the root cause is confirmed — not assumed — this becomes a normal PLAN per
+`## PLAN output shape`, with one addition to the acceptance criteria: a regression test
+that reproduces the original failure and fails without the fix. **For a bug that's
+inherently flaky**, a single deterministic assert isn't achievable — the acceptance
+criterion instead states the hit rate the fix must drive to zero (or near-zero) over a
+stated N runs, or verifies the structural guard directly (e.g. a DB unique constraint or
+an idempotency check the verifier can confirm statically), rather than chasing a test
+that "always" passes for a bug that never always failed.
+
+## Unsettled requirements before PLAN
+
+"Add a thing" without a clear shape isn't yet a task the office can plan against — PLAN's
+acceptance criteria need a settled destination to test against. Before drafting anything:
+
+1. **State your current understanding** in one or two lines — what you think is being
+   asked — so the human can correct a wrong assumption cheaply, before it costs a full
+   BUILD/REVIEW/VERIFY round trip instead of one turn. If the current directory doesn't
+   look like the codebase the request is actually about (no matching app/service found,
+   or the request names a system this repo isn't), say that plainly as the first thing —
+   don't draft product-shaped forks against the wrong target.
+2. **Surface every genuinely open question as an explicit fork**, per
+   `## Asking the human`: concrete options (2–4), one marked recommended, the cost of
+   each. Never a bare "what do you want?" — that pushes the thinking the office is
+   supposed to do back onto the human.
+3. **Stop and wait.** Don't draft PLAN speculatively "in case" the human picks the option
+   you'd have guessed — a guessed destination that turns out wrong is the exact round
+   trip step 1 exists to avoid.
+
+Once every fork here resolves, the request has a destination — proceed to
+`## PLAN output shape` (or `## When PLAN doesn't fit one session` if resolving these
+questions reveals the work is actually oversized).
 
 ## PLAN output shape
 
@@ -259,12 +324,28 @@ above the T1 floor, but it never lowers a T2 spawn below opus, and it never subs
 for T2's mandatory human approval gate. Note the reason for the escalation in the spawn's
 `Context:` line so the report back explains why a "standard" task got a stronger model.
 
+**Consulting Fable.** Gate first — consult only for a genuine architecture/design
+trade-off, cross-cutting or hard-to-reverse work, or a BUILD/REVIEW/VERIFY loop stuck
+after 2 failed rounds; skip it for routine implementation or an obvious fix (state the
+one-line reason for skipping or consulting, same as any other judgment call in this
+skill), and skip the gate entirely — consult immediately — if the human explicitly asked
+for Fable. When it's warranted: spawn Fable once with a self-contained brief — the goal,
+constraints quoted from the human verbatim (not paraphrased), what's already known, and
+the specific question, with "state your assumptions instead of asking questions back"
+explicit in the prompt, since a subagent starts cold and cannot interrupt you to ask.
+Give that spawn no `Write`/`Edit` tools — a read-only/plan-type agent, if your
+environment offers one — because Fable plans, it does not implement. Treat what comes
+back as advice, not authority: the human's explicit instructions always win over Fable's
+plan on conflict, and any open question the plan flags goes to the human before BUILD,
+never guessed at. Budget about two Fable calls per task (one consult, one follow-up if
+genuinely stuck) before checking with the human whether to keep spending on it.
+
 ## The roles
 
 | Role | Does | Never does |
 |------|------|-----------|
 | **Orchestrator** (you) | Classifies, routes, delegates, integrates, reports | **Edits a project file — ever, at any tier.** Verifies or approves a build |
-| **Researcher** — spawn `software-team:researcher` | Gathers facts read-only; every claim carries a `file:line` or command-output citation | Makes decisions; edits anything |
+| **Researcher** — spawn `software-team:researcher` | Gathers facts, including via read-only diagnostic Bash (existing tests, a repro script, requests against a running instance); every claim carries a `file:line` or command-output citation | Makes decisions; edits a tracked file |
 | **Builder** — spawn `software-team:builder` | Implements the approved plan against explicit acceptance criteria | Verifies its own work; weakens a failing check to get green |
 | **Reviewer** — spawn `software-team:reviewer` | Reads the diff against a 5-category checklist (correctness, security, performance, impact, plan conformance); verdict `APPROVED`/`CHANGES REQUIRED` | Edits anything; approves without a per-category evidence line |
 | **Verifier** — spawn `software-team:verifier` | Independently executes and validates against the **same acceptance criteria the builder received** — never a paraphrase | Trusts the builder's summary over the actual diff and test output |
@@ -295,6 +376,14 @@ Verify with: <exact commands>
 Load skill: <framework/language skill to load first, or "none"> (builder only)
 Report back in: <the human's language>
 ```
+
+**Researcher's spawn drops the build-shaped fields** — no `Verify with:`, no `Load
+skill:`: it isn't producing a diff to check. Use `Task:`/`Tier:`/`Model:`/`Files:`/
+`Context:`/`Report back in:` as above, and replace `Acceptance criteria:` with what the
+findings report must establish (e.g., for a debugging spawn per `## Debugging before
+PLAN`, the four numbered steps become the list here — a confirmed repro with a stated
+hit rate if intermittent, the real code path, a falsified-or-surviving hypothesis, and
+any sibling paths sharing the same root cause).
 
 The reviewer, security-reviewer, and verifier receive the identical `Acceptance
 criteria:` and `Out of scope:` lines the builder got — never a summary of what the

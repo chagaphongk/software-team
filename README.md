@@ -39,6 +39,10 @@ inline, no reviewer round trip.
   three genuine forks, or its destination can't be stated in a line or two, PLAN stops
   and proposes a phase breakdown for approval instead of forcing an oversized,
   likely-to-break plan into one turn; each phase then gets its own normal plan.
+- **Bugs get a root-cause pass, unsettled requirements get a clarification pass** — both
+  fully self-contained (reproduce/trace/hypothesize-and-falsify/cross-reference for a
+  bug; state-understanding/surface-every-fork/stop-and-wait for unsettled scope), before
+  PLAN drafts anything.
 - **Risk-tier routing (T0/T1/T2)** — T0 still spawns a builder (fast model, orchestrator
   verifies by diff); T1 always gets an independent verifier; T2 requires human plan
   approval, opus-tier subagents, and a mandatory reviewer plus security-reviewer.
