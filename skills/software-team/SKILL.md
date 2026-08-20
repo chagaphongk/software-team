@@ -1,6 +1,6 @@
 ---
 name: software-team
-description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with a dedicated reviewer role reading every diff alongside the independent verifier that runs it. Classify the risk tier first, then dispatch researcher/builder/reviewer/verifier subagents through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, gate risky or irreversible work behind human approval, and enforce the guard rails deterministically via hooks (not just instructions). Prefer this over agent-office specifically when you want the stricter zero-self-edit invariant and the standalone reviewer pass; agent-office remains the leaner choice when T0 work should be handled inline without a subagent round trip. Prefer either office over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the shape of the work is not a build: an unsettled feature belongs in a brainstorming skill first, an unexplained bug belongs in a systematic-debugging skill first — each hands the work back here once the approach is settled. Do NOT use for trivial one-liner questions or quick syntax lookups.'
+description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with a dedicated reviewer role reading every diff alongside the independent verifier that runs it. Classify the risk tier first, then dispatch researcher/builder/reviewer/security-reviewer/documenter/verifier/deployer subagents through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, gate risky or irreversible work behind human approval (deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself), and enforce the guard rails deterministically via hooks (not just instructions). Prefer this over agent-office specifically when you want the stricter zero-self-edit invariant and the standalone reviewer pass; agent-office remains the leaner choice when T0 work should be handled inline without a subagent round trip. Prefer either office over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the shape of the work is not a build: an unsettled feature belongs in a brainstorming skill first, an unexplained bug belongs in a systematic-debugging skill first — each hands the work back here once the approach is settled. Do NOT use for trivial one-liner questions or quick syntax lookups.'
 ---
 
 # Software Team
@@ -71,6 +71,15 @@ direction.
   **require explicit human approval of the plan before BUILD**. Approval given for one
   plan never carries to a revised plan or a different task. Read `references/rules.md`
   before PLAN. Override builder/reviewer/verifier to `model: "opus"` on every T2 spawn.
+  Spawn `software-team:security-reviewer` before DONE whenever the work touches auth,
+  payments, PII, secrets, or a public API — see Definition of done.
+- **Deploy, release, publish, or push** (any tier, whenever the task's own completion
+  requires an outward-facing or irreversible action) — never run it yourself. Spawn
+  `software-team:deployer` with the exact command and the human's quoted approval, per
+  its own spawn shape below. This is the concrete mechanism behind hard rule #2.
+- **Documentation update** — when the plan's acceptance criteria call for docs, or the
+  diff changes a documented public interface, spawn `software-team:documenter` after the
+  verifier's `PASS` (and the reviewer's `APPROVED`, where spawned).
 - **Read-only / analysis-only deliverables** (a code review, a security audit, a design
   critique — anything where BUILD would be "produce nothing, the analysis is the
   deliverable"), at any tier: skip the PLAN-approval gate — a review changes nothing, so
@@ -113,6 +122,9 @@ Match the model to the cost of a mistake, not to the size of the task.
 | T0 builder spawn, mechanical fact-gathering | Session default (fast tier) | Errors here are cheap and caught by your own diff read |
 | T1 build, review, and verify | Session default | The reviewer and verifier are the safety net; a stronger model buys little |
 | T2 build, review, and verify | **Opus** (strong tier) | A mistake in auth, migration, or deletion costs more than the tokens |
+| security-reviewer, any tier it's spawned at | Match the builder's tier for that task (session default on T1, opus on T2) | The security pass is only as trustworthy as the model reading the diff it's paired with |
+| documenter | Session default (fast tier) | Errors here are cheap — a wrong doc line is caught by the next reader, not a runtime failure |
+| deployer | Session default, regardless of tier | Its job is precise execution of an already-approved command, not judgment; a stronger model buys nothing when there's nothing left to decide |
 | Architecture and planning with real trade-offs, cross-cutting or hard-to-reverse designs, a stuck 3-round loop | **Fable** (top tier), as a one-shot advisor via the `fable-advisor` path | The plan is the highest-leverage artifact; the top tier never runs the routine loop |
 
 Escalation is one-way within a task: if a task turns out harder than classified, move up a
@@ -128,11 +140,14 @@ obvious fixes — a gate that lets everything through costs more than it protect
 | **Builder** — spawn `software-team:builder` | Implements the approved plan against explicit acceptance criteria | Verifies its own work; weakens a failing check to get green |
 | **Reviewer** — spawn `software-team:reviewer` | Reads the diff against a 5-category checklist (correctness, security, performance, impact, plan conformance); verdict `APPROVED`/`CHANGES REQUIRED` | Edits anything; approves without a per-category evidence line |
 | **Verifier** — spawn `software-team:verifier` | Independently executes and validates against the **same acceptance criteria the builder received** — never a paraphrase | Trusts the builder's summary over the actual diff and test output |
+| **Security reviewer** — spawn `software-team:security-reviewer` | A dedicated OWASP-class pass (injection, access control, auth, secrets, deserialization, SSRF, misconfig); verdict `CLEAR`/`FINDINGS` | Edits anything; substitutes for the standard reviewer's broader checklist |
+| **Documenter** — spawn `software-team:documenter` | Updates README/CHANGELOG/API docs/docstrings after a `PASS`, tracing every claim to the diff | Documents intended-but-unbuilt behavior; restructures docs beyond the change |
+| **Deployer** — spawn `software-team:deployer` | Runs the exact approved deploy/release/publish/push command, with the human's quoted approval in its prompt | Infers what to run; proceeds without a quoted approval line; chains a second irreversible action |
 
 Spawn these agent types by name (`software-team:builder`, not a bare `builder` — a
 same-named agent elsewhere in the registry is a different agent with a weaker contract).
 
-Use this template for every builder/reviewer/verifier spawn:
+Use this template for every builder/reviewer/verifier/security-reviewer spawn:
 
 ```
 Task: <one sentence>
@@ -149,8 +164,25 @@ Load skill: <framework/language skill to load first, or "none"> (builder only)
 Report back in: <the human's language>
 ```
 
-The reviewer and verifier receive the identical `Acceptance criteria:` and `Out of
-scope:` lines the builder got — never a summary of what the builder said it did.
+The reviewer, security-reviewer, and verifier receive the identical `Acceptance
+criteria:` and `Out of scope:` lines the builder got — never a summary of what the
+builder said it did. The documenter gets the same `Files:`/`Context:` plus the verifier's
+`PASS` evidence, so it documents what actually shipped, not the original plan.
+
+The deployer's spawn is shaped differently — it has no plan to build against, only an
+already-decided action to execute:
+
+```
+Deploy with: <the exact command(s), verbatim, nothing implied>
+Target: <branch/environment/package/version being affected>
+Approved by: <the human's own words approving this exact action, quoted, with when>
+Prior gates: <verifier PASS / reviewer APPROVED / security-reviewer CLEAR — cite each that applies>
+Report back in: <the human's language>
+```
+
+Never construct the `Approved by:` line yourself from what you think the human meant —
+copy their actual words. If they didn't use words that clearly approve this exact action,
+that's a stop-and-ask, not a spawn.
 
 ## Language
 
@@ -189,7 +221,9 @@ on every task:
 
 1. **Evidence or it didn't happen.** File paths, exact commands, exit codes, test output.
 2. **No self-approval.** No agent approves its own work. Irreversible or outward-facing
-   actions (deploy, push, delete, publish) pass through a human gate.
+   actions (deploy, push, delete, publish) pass through a human gate, then execute only
+   via `software-team:deployer` with that approval quoted in its prompt — never run
+   directly by the orchestrator or any other agent.
 3. **A failing gate stops the work.** Never downgrade, waive, or work around a failing
    check without an explicit human decision.
 4. **Simplest design that meets the criteria.** Every new dependency or abstraction needs
@@ -232,12 +266,20 @@ A task is DONE only when, in this order:
 1. Deterministic checks pass first — format, lint, typecheck, tests.
 2. The reviewer (where spawned) returned `APPROVED` and the verifier returned `PASS`.
 3. **Security review for T2 work touching auth, payments, PII, secrets, or a public API**
-   — a dedicated pass (the `security-review` skill, or a `security-reviewer` /
-   `secure-code-guardian` subagent) against the diff, separate from the standard reviewer
-   and verifier checks. Skip for T0/T1 with no security-sensitive surface.
+   — spawn `software-team:security-reviewer` for a dedicated pass against the diff,
+   separate from the standard reviewer and verifier checks; fall back to the
+   `security-review` skill or a `secure-code-guardian` subagent only if
+   `software-team:security-reviewer` is unavailable. Skip for T0/T1 with no
+   security-sensitive surface.
 4. The diff is scoped to the task — every changed line traces to the request.
 5. Evidence is recorded: the exact commands run and their results.
 6. Any course-changing decision got its one line in `docs/decisions.md`.
+7. **Documentation, if the plan called for it** — `software-team:documenter` ran after
+   the verifier's `PASS` and its report is included.
+8. **Any deploy/release/publish/push the task required** ran via
+   `software-team:deployer`, with its exit code and resulting state recorded — never
+   report DONE on a task whose own scope included shipping it if that step didn't
+   actually run.
 
 Report completion plainly with the evidence. On T1/T2, close with a compact
 **traceability summary** — one line per requirement: requirement → task(s) → reviewer

@@ -2,10 +2,12 @@
 
 A Claude Code plugin that runs a task through a real engineering office — an
 orchestrator that classifies risk and delegates, plus spawned `researcher` / `builder` /
-`reviewer` / `verifier` subagents — instead of one Claude instance role-playing hats in a
-single conversation. The orchestrator never edits a project file itself, at any tier: even
-a one-character fix goes through a spawned builder, so the guard hooks and the agent log
-can prove delegation happened rather than trusting a transcript.
+`reviewer` / `security-reviewer` / `documenter` / `verifier` / `deployer` subagents —
+instead of one Claude instance role-playing hats in a single conversation. The
+orchestrator never edits a project file itself, at any tier: even a one-character fix
+goes through a spawned builder, so the guard hooks and the agent log can prove delegation
+happened rather than trusting a transcript. The same invariant covers shipping: deploy,
+publish, and push always run through `software-team:deployer`, never the orchestrator.
 
 ## Why this exists next to `agent-office`
 
@@ -32,9 +34,15 @@ inline, no reviewer round trip.
   RESEARCH, spawned by name (`software-team:builder`, not a bare `builder`).
 - **Risk-tier routing (T0/T1/T2)** — T0 still spawns a builder (fast model, orchestrator
   verifies by diff); T1 always gets an independent verifier; T2 requires human plan
-  approval, opus-tier subagents, and a mandatory reviewer.
+  approval, opus-tier subagents, and a mandatory reviewer plus security-reviewer.
 - **Read-only deliverables skip the plan gate** — a code review or audit spawns
-  `software-team:reviewer` directly; its findings are the deliverable.
+  `software-team:reviewer` (or `software-team:security-reviewer` for a security-focused
+  ask) directly; its findings are the deliverable.
+- **Full-office roster, not just build/verify** — `security-reviewer` runs a dedicated
+  OWASP-class pass before DONE on T2 security-sensitive work; `documenter` updates
+  README/CHANGELOG/docstrings after a `PASS`, tracing every line to the diff; `deployer`
+  is the only agent allowed to run a deploy/publish/push, and only with the human's
+  quoted approval in its prompt — the orchestrator itself never runs one.
 - **Deterministic guard hooks** — `hooks/guard_bash.py` blocks force-push, `git reset
   --hard`, `git clean -f`, and destructive shell reads of secrets; `hooks/guard_secrets.py`
   blocks Read/Edit/Write of `.env*`, key files, and `credentials.*`; `hooks/log_agent.py`
