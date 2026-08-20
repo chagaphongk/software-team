@@ -1,0 +1,5 @@
+{
+  "name": "software-team",
+  "version": "0.1.0",
+  "description": "Disciplined engineering-office workflow with mandatory subagent delegation: risk-tier routing, RESEARCH -> PLAN -> BUILD -> REVIEW -> VERIFY, a dedicated reviewer role alongside the builder/verifier split, evidence-backed claims, human approval gates, and deterministic guard hooks. Ported from the Claude Code plugin at https://github.com/chagaphongk/software-team."
+}

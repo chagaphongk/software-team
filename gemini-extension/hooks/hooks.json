@@ -1,0 +1,54 @@
+{
+  "hooks": {
+    "BeforeTool": [
+      {
+        "matcher": "run_shell_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${extensionPath}/hooks/guard_bash.py\""
+          }
+        ]
+      },
+      {
+        "matcher": "read_file|replace|write_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${extensionPath}/hooks/guard_secrets.py\""
+          }
+        ]
+      }
+    ],
+    "BeforeAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${extensionPath}/hooks/log_agent.py\""
+          }
+        ]
+      }
+    ],
+    "AfterAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${extensionPath}/hooks/log_agent.py\""
+          }
+        ]
+      }
+    ],
+    "PreCompress": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${extensionPath}/hooks/pre_compact.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

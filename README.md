@@ -150,7 +150,41 @@ This version's evals (`skills/software-team/evals/evals.json`) were adapted to c
 actual subagent delegation instead of in-transcript role-play text; a fresh baseline run
 against this architecture is pending.
 
+## Gemini CLI port
+
+`gemini-extension/` is a parallel port of this same design to Gemini CLI's own extension
+format (`gemini-extension.json` + `agents/*.md` + `skills/software-team/SKILL.md` +
+`commands/*.toml` + `hooks/hooks.json`), for people who use Gemini CLI instead of (or
+alongside) Claude Code. Install with:
+
+```
+gemini extensions install /path/to/software-team/gemini-extension --consent
+```
+
+(`--consent` skips the interactive trust/security prompt for a non-interactive install;
+review the extension first if you're installing from someone else's clone. If it
+launches non-interactively and shows a "trust this folder" prompt anyway, set
+`GEMINI_CLI_TRUST_WORKSPACE=true` for that command.)
+
+**Known gaps in this port, disclosed rather than glossed over:**
+- Model tiers are described generically (cheapest/fastest, balanced, most capable,
+  extended-reasoning) rather than pinned to a specific Gemini model string, since
+  Gemini's model catalog names change faster than this file should need updating —
+  resolve the current model string for each tier yourself when spawning.
+- The two guard hooks (`guard_bash.py`, `guard_secrets.py`) and the agent-log hook
+  (`log_agent.py`) parse the incoming hook JSON defensively (several plausible field-name
+  variants), because the exact payload shape Gemini CLI's `BeforeTool`/`BeforeAgent`/
+  `AfterAgent` events send was not confirmed by a live session during this port — this
+  machine's Gemini CLI account could not authenticate at the time. The hook *event names*
+  and the extension's overall structure (`agents/`, `skills/`, `commands/`, `hooks/`) are
+  confirmed against Gemini CLI's own docs and its `extensions validate` / `extensions
+  list` / `skills list` tooling — those passed clean. Function-test the hooks yourself
+  once you have a working session (trigger a `run_shell_command` call with a blocked
+  pattern and confirm it's actually rejected) before relying on them.
+- `evals/evals.json` was not ported (benchmark harness, not required for the extension to
+  function).
+
 ## Related
 
-[agent-office](https://github.com/chagaphongk/agent-office) — the leaner sibling; T0
-handled inline, no dedicated reviewer.
+[agent-office](https://github.com/chagaphongk/agent-office) — the leaner Claude Code
+sibling; T0 handled inline, no dedicated reviewer.
