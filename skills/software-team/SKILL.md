@@ -207,8 +207,8 @@ on every task:
 These are also enforced deterministically where a rule can be written as a check: install
 `hooks/hooks.json` (see the plugin README) to block destructive Bash commands and secret
 file access at the harness level, and to log every subagent spawn to
-`.claude/state/agent-log.jsonl` regardless of what the model reports — `/software-team:
-workflow` reads that log as ground truth.
+`.claude/state/agent-log.jsonl` regardless of what the model reports —
+`/software-team:workflow` reads that log as ground truth.
 
 ## Continuity — surviving context loss
 
