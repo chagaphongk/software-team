@@ -35,6 +35,10 @@ inline, no reviewer round trip.
 
 - **RESEARCH → PLAN → BUILD → REVIEW → VERIFY** — real subagents at every step past
   RESEARCH, spawned by name (`software-team:builder`, not a bare `builder`).
+- **PLAN sizes itself before drafting** — if a task turns out to hide more than two or
+  three genuine forks, or its destination can't be stated in a line or two, PLAN stops
+  and recommends handing off to `wayfinder` (a separate installed skill for exactly this)
+  instead of forcing an oversized, likely-to-break plan into one turn.
 - **Risk-tier routing (T0/T1/T2)** — T0 still spawns a builder (fast model, orchestrator
   verifies by diff); T1 always gets an independent verifier; T2 requires human plan
   approval, opus-tier subagents, and a mandatory reviewer plus security-reviewer.

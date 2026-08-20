@@ -27,6 +27,7 @@ question nobody has settled.
 |---|---|
 | A bug, a failing test, behavior nobody can explain | **superpowers:systematic-debugging** sets the approach, then the office runs the fix |
 | New feature where the requirements themselves are unsettled | **superpowers:brainstorming** first — the office cannot verify against criteria that don't exist yet |
+| A loose idea, too big for one session, foggy about its own destination | **wayfinder** — see `## When PLAN doesn't fit one session` below; name the `/wayfinder` command and let the human start it, don't draft a plan yet |
 | A written plan or spec ready to execute | The office loop, so BUILD gets an independent REVIEW and VERIFY |
 | A read-only deliverable: a code review, an audit, a design critique | Skip PLAN, spawn `software-team:reviewer` (or `software-team:designer` in REVIEW mode for a UX-focused critique) directly — see the read-only exception in Step 3 |
 | A new screen or flow with no design spec yet | Spawn `software-team:designer` in DESIGN mode before PLAN — its spec becomes PLAN's input, not a replacement for PLAN |
@@ -143,8 +144,12 @@ verification, and the same evidence discipline as if it had run alone.
 
 ## PLAN output shape
 
-On every T1/T2 task (T0 skips this — no ceremony on a typo fix), draft the plan in this
-shape:
+On every T1/T2 task (T0 skips this — no ceremony on a typo fix), first size the work: if
+you can't state a **Destination** in one or two lines without hedging, or drafting Step 3
+below turns up more than two or three genuine *forks*, or a fork's own resolution needs
+investigation spanning more than this session — stop and go to `## When PLAN doesn't fit
+one session` instead of forcing an oversized plan into this shape. Otherwise, draft the
+plan in this shape:
 
 1. **Destination** — one line: what "done" looks like for the whole task.
 2. **Settled constraints** — what must not be reopened without a scope change.
@@ -159,6 +164,50 @@ Present the drafted plan and wait for the human to confirm every ratification an
 before BUILD starts. On T2 this is subsumed by the approval-before-BUILD gate in Step 3.
 On T1, which has no formal gate, this is a lighter, single-turn confirmation — end the
 PLAN turn and wait, the same way any other question to the human works.
+
+## When PLAN doesn't fit one session
+
+Some tasks only reveal their true size once you start drafting: the "one clear ask" from
+Step 1 turns out to hide several genuinely diverging forks, or an acceptance criterion
+can't be written because an earlier step first needs its own investigation. This is the
+shape **wayfinder** — a separate, installed skill for exactly this — already solves, so
+borrow its vocabulary rather than inventing a second one: a **destination** (what
+reaching the end of this effort looks like), a **fork** (options that genuinely diverge,
+not yet decided) versus a **ratification** (follows from what's already settled), and
+**fog** (a question you can tell is coming but can't yet phrase sharply enough to act on
+— not the same as a fork, which is already sharp but undecided).
+
+**Stay inline** for the ordinary case — one or two forks, each answerable by asking the
+human a direct question, nothing that needs its own multi-session investigation: draft
+the plan as normal, with each fork as an explicit question in Step 3 of `## PLAN output
+shape`. Most T1/T2 tasks never leave this path.
+
+**Hand off to wayfinder** when any of the sizing signals above actually hold — don't
+force a plan that's likely to break on contact with the work just to have something to
+present. wayfinder is invoked by the human, never by you (it disables model-invocation on
+purpose) — name it and hand off what you already know, so its charting session doesn't
+start cold:
+
+```
+This looks bigger than one plan — [N] forks, and [the destination/question that's still
+foggy]. I'd recommend charting it with wayfinder instead of me drafting a plan likely to
+break on contact.
+
+What I can hand it:
+- Destination (draft): <best one-line attempt, marked as a draft>
+- Forks already visible: <list, one line each>
+- Fog: <what's clearly coming but not sharp enough to act on yet>
+
+Run /wayfinder (or tell me to) with the above to start charting — or if you'd rather I
+draft what I have now and take the risk of a plan that doesn't survive contact, say so.
+```
+
+Never silently draft a monolithic plan for work you've just told the human is too big for
+one — that's the exact failure this section exists to catch. Once wayfinder's map
+produces a resolved destination and settled decisions, return here and draft `## PLAN
+output shape` from the resolution. wayfinder replaces guessing at scope, not the office's
+own discipline once scope is settled: RESEARCH → PLAN → BUILD → REVIEW → VERIFY still
+runs per resolved ticket or phase, one at a time, exactly as for any other task.
 
 ## Model routing
 
