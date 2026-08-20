@@ -2,12 +2,15 @@
 
 A Claude Code plugin that runs a task through a real engineering office — an
 orchestrator that classifies risk and delegates, plus spawned `researcher` / `builder` /
-`reviewer` / `security-reviewer` / `documenter` / `verifier` / `deployer` subagents —
-instead of one Claude instance role-playing hats in a single conversation. The
-orchestrator never edits a project file itself, at any tier: even a one-character fix
+`reviewer` / `security-reviewer` / `documenter` / `verifier` / `deployer` / `designer`
+subagents — instead of one Claude instance role-playing hats in a single conversation.
+The orchestrator never edits a project file itself, at any tier: even a one-character fix
 goes through a spawned builder, so the guard hooks and the agent log can prove delegation
 happened rather than trusting a transcript. The same invariant covers shipping: deploy,
 publish, and push always run through `software-team:deployer`, never the orchestrator.
+Independent spawns run in parallel batches by default — three unrelated builders, or a
+reviewer alongside a security-reviewer on the same finished diff — never one at a time
+just because that's the simpler control flow.
 
 ## Why this exists next to `agent-office`
 
@@ -42,7 +45,17 @@ inline, no reviewer round trip.
   OWASP-class pass before DONE on T2 security-sensitive work; `documenter` updates
   README/CHANGELOG/docstrings after a `PASS`, tracing every line to the diff; `deployer`
   is the only agent allowed to run a deploy/publish/push, and only with the human's
-  quoted approval in its prompt — the orchestrator itself never runs one.
+  quoted approval in its prompt — the orchestrator itself never runs one; `designer`
+  produces a UI/UX spec before BUILD for a new screen (DESIGN mode) and audits any diff
+  that changes rendered output for hierarchy/accessibility/consistency before DONE
+  (REVIEW mode) — a distinct lens from the standard reviewer's correctness/security/
+  performance/impact/plan-conformance checklist.
+- **Parallel by default when scopes are disjoint** — multiple independent builders, or a
+  reviewer/security-reviewer/designer all reading the same finished diff, spawn in one
+  batch instead of one at a time. Complexity within a tier (many interacting files,
+  concurrency, an ambiguous judgment call, a second attempt after a failed round) can
+  escalate a spawn's model up from its tier's floor — the tier is a floor, not a fixed
+  assignment.
 - **Deterministic guard hooks** — `hooks/guard_bash.py` blocks force-push, `git reset
   --hard`, `git clean -f`, and destructive shell reads of secrets; `hooks/guard_secrets.py`
   blocks Read/Edit/Write of `.env*`, key files, and `credentials.*`; `hooks/log_agent.py`

@@ -1,6 +1,6 @@
 ---
 name: software-team
-description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with a dedicated reviewer role reading every diff alongside the independent verifier that runs it. Classify the risk tier first, then dispatch researcher/builder/reviewer/security-reviewer/documenter/verifier/deployer subagents through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, gate risky or irreversible work behind human approval (deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself), and enforce the guard rails deterministically via hooks (not just instructions). Prefer this over agent-office specifically when you want the stricter zero-self-edit invariant and the standalone reviewer pass; agent-office remains the leaner choice when T0 work should be handled inline without a subagent round trip. Prefer either office over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the shape of the work is not a build: an unsettled feature belongs in a brainstorming skill first, an unexplained bug belongs in a systematic-debugging skill first — each hands the work back here once the approach is settled. Do NOT use for trivial one-liner questions or quick syntax lookups.'
+description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with a dedicated reviewer role reading every diff alongside the independent verifier that runs it. Classify the risk tier first, then dispatch researcher/builder/reviewer/security-reviewer/documenter/verifier/deployer/designer subagents — in parallel batches whenever their scopes are independent — through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, gate risky or irreversible work behind human approval (deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself), and enforce the guard rails deterministically via hooks (not just instructions). Prefer this over agent-office specifically when you want the stricter zero-self-edit invariant and the standalone reviewer pass; agent-office remains the leaner choice when T0 work should be handled inline without a subagent round trip. Prefer either office over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the shape of the work is not a build: an unsettled feature belongs in a brainstorming skill first, an unexplained bug belongs in a systematic-debugging skill first — each hands the work back here once the approach is settled. Do NOT use for trivial one-liner questions or quick syntax lookups.'
 ---
 
 # Software Team
@@ -28,7 +28,8 @@ question nobody has settled.
 | A bug, a failing test, behavior nobody can explain | **superpowers:systematic-debugging** sets the approach, then the office runs the fix |
 | New feature where the requirements themselves are unsettled | **superpowers:brainstorming** first — the office cannot verify against criteria that don't exist yet |
 | A written plan or spec ready to execute | The office loop, so BUILD gets an independent REVIEW and VERIFY |
-| A read-only deliverable: a code review, an audit, a design critique | Skip PLAN, spawn `software-team:reviewer` directly — see the read-only exception in Step 3 |
+| A read-only deliverable: a code review, an audit, a design critique | Skip PLAN, spawn `software-team:reviewer` (or `software-team:designer` in REVIEW mode for a UX-focused critique) directly — see the read-only exception in Step 3 |
+| A new screen or flow with no design spec yet | Spawn `software-team:designer` in DESIGN mode before PLAN — its spec becomes PLAN's input, not a replacement for PLAN |
 | Clear ask, known scope, code to change | **The office.** Continue to Step 2 |
 
 Answer directly, no tier and no spawn, for anything that will not write or edit a project
@@ -80,6 +81,11 @@ direction.
 - **Documentation update** — when the plan's acceptance criteria call for docs, or the
   diff changes a documented public interface, spawn `software-team:documenter` after the
   verifier's `PASS` (and the reviewer's `APPROVED`, where spawned).
+- **Any diff that changes rendered UI output** (components, pages, layouts, styles,
+  templates) — spawn `software-team:designer` in REVIEW mode before DONE, at every tier
+  including T0. It can run in the same parallel batch as `software-team:reviewer` (see
+  `## Parallel work` below) since neither depends on the other's output, only on the same
+  finished diff.
 - **Read-only / analysis-only deliverables** (a code review, a security audit, a design
   critique — anything where BUILD would be "produce nothing, the analysis is the
   deliverable"), at any tier: skip the PLAN-approval gate — a review changes nothing, so
@@ -93,6 +99,47 @@ When the work targets a specific framework, language, or platform, read
 convention docs (`docs/product.md`, `docs/design.md`, a codebase map), read them the same
 way you would read any other file in the repo — this skill does not prescribe their
 layout; that is the project's call, not the office's.
+
+## Parallel work
+
+Spawn subagents in parallel — multiple `Agent` calls in the same batch — whenever their
+scopes are genuinely independent. Sequential-by-default is a habit this skill exists to
+break, not a safety property: a builder spawned one at a time when three unrelated
+modules need the same change just makes the human wait three times for no reason.
+
+**The test for "independent" is disjoint scope, not disjoint intent.** Two spawns are
+safe to parallelize only when:
+
+- Their `Files:` lists don't overlap — no two streams write the same file.
+- Neither stream's `Context:` or acceptance criteria depend on the other stream's output.
+  If task B needs task A's result (a shared interface, a migration A creates that B
+  reads), they are sequential — parallelizing them produces a build for B against
+  something that doesn't exist yet.
+
+Where this shows up in practice:
+
+- **Multiple independent builders.** A T1 task that touches unrelated modules with no
+  shared file (e.g. "add the same audit-log call to three independent service classes")
+  is one plan with N independent acceptance-criteria sets — spawn N builders in one
+  batch, each scoped to its own file(s), each still gets its own review/verify per the
+  normal rules. Never split a single coherent change (one feature, one interacting set of
+  files) into parallel streams just to look efficient — that's the disjoint-scope test
+  failing, not passing.
+- **Reviewer + security-reviewer on the same diff.** Once a diff is finished, the
+  standard reviewer and the security-reviewer (and the designer in REVIEW mode, for a UI
+  diff) are all read-only passes over the *same already-finished* work — spawn them in
+  the same batch. None of them edits anything, so there is nothing to conflict.
+- **Multiple independent researchers.** Distinct, unrelated open questions (two different
+  areas of the codebase, or a codebase question plus a web-search question) go in one
+  parallel batch instead of round-tripping one at a time.
+- **Verifier stays sequential after its builder.** A verifier's job is to check the
+  builder's actual output, so it can only start once that specific builder's spawn has
+  returned — never parallelize a verifier with the build it's verifying.
+
+Integrate results only after a parallel batch fully returns — read every report before
+deciding the next step, the same as a single spawn. A parallel batch does not relax any
+other rule in this skill: each stream still needs its own acceptance criteria, its own
+verification, and the same evidence discipline as if it had run alone.
 
 ## PLAN output shape
 
@@ -115,9 +162,11 @@ PLAN turn and wait, the same way any other question to the human works.
 
 ## Model routing
 
-Match the model to the cost of a mistake, not to the size of the task.
+Match the model primarily to the cost of a mistake (the risk tier), and secondarily to
+how much genuine reasoning the specific spawn needs (its complexity) — tier sets the
+floor, complexity can only push a spawn up from that floor, never below it.
 
-| Work | Model | Why |
+| Work | Model floor (by tier) | Why |
 |------|-------|-----|
 | T0 builder spawn, mechanical fact-gathering | Session default (fast tier) | Errors here are cheap and caught by your own diff read |
 | T1 build, review, and verify | Session default | The reviewer and verifier are the safety net; a stronger model buys little |
@@ -125,11 +174,39 @@ Match the model to the cost of a mistake, not to the size of the task.
 | security-reviewer, any tier it's spawned at | Match the builder's tier for that task (session default on T1, opus on T2) | The security pass is only as trustworthy as the model reading the diff it's paired with |
 | documenter | Session default (fast tier) | Errors here are cheap — a wrong doc line is caught by the next reader, not a runtime failure |
 | deployer | Session default, regardless of tier | Its job is precise execution of an already-approved command, not judgment; a stronger model buys nothing when there's nothing left to decide |
+| designer, DESIGN mode | Session default; opus if the flow is genuinely novel (no comparable pattern in the codebase or the project's design.md) | Design-from-nothing needs more judgment than design-from-precedent |
+| designer, REVIEW mode | Match the paired reviewer's tier | Same reasoning as security-reviewer — it's reading the same diff at the same stakes |
 | Architecture and planning with real trade-offs, cross-cutting or hard-to-reverse designs, a stuck 3-round loop | **Fable** (top tier), as a one-shot advisor via the `fable-advisor` path | The plan is the highest-leverage artifact; the top tier never runs the routine loop |
 
-Escalation is one-way within a task: if a task turns out harder than classified, move up a
-tier and stay there. Skip the top-tier escalation entirely for routine implementation or
-obvious fixes — a gate that lets everything through costs more than it protects.
+Escalation across tiers is one-way within a task: if a task turns out riskier than
+classified, move up a tier and stay there. Skip the top-tier escalation entirely for
+routine implementation or obvious fixes — a gate that lets everything through costs more
+than it protects.
+
+**Complexity escalation, within a tier.** A tier's row above is a floor, not a fixed
+assignment — a task can be more complex than its risk tier implies, and the model should
+follow the complexity, not just the risk. Escalate one rung above the floor (session
+default → opus; T2's opus stays at opus, there is no rung above it except Fable's
+one-shot advisory role) for that specific spawn when at least one of these holds:
+
+- The change genuinely interacts across more than ~3 files or modules — not 3 files that
+  each get the same mechanical edit (that's still simple), but 3+ files whose logic
+  depends on each other.
+- The work involves concurrency, an algorithmic subtlety, or a race/ordering condition —
+  the kind of bug a fast pass reliably misses.
+- The acceptance criteria leave a real judgment call to the spawn rather than a
+  mechanical check (e.g. "handle this ambiguous edge case sensibly" instead of a testable
+  statement) — if you find yourself unable to write a crisp acceptance criterion, that
+  itself is a complexity signal, not just a PLAN-quality problem.
+- A build/review/verify round already failed once on this task (round ≥ 2 in the
+  BUILD/REVIEW/VERIFY loop) — a second attempt at the session-default tier repeating the
+  first attempt's blind spot is the expensive failure mode; escalate the model for the
+  retry even if the tier itself doesn't change.
+
+This lever is orthogonal to Step 2's risk classification: it can raise a T1 spawn's model
+above the T1 floor, but it never lowers a T2 spawn below opus, and it never substitutes
+for T2's mandatory human approval gate. Note the reason for the escalation in the spawn's
+`Context:` line so the report back explains why a "standard" task got a stronger model.
 
 ## The roles
 
@@ -143,11 +220,15 @@ obvious fixes — a gate that lets everything through costs more than it protect
 | **Security reviewer** — spawn `software-team:security-reviewer` | A dedicated OWASP-class pass (injection, access control, auth, secrets, deserialization, SSRF, misconfig); verdict `CLEAR`/`FINDINGS` | Edits anything; substitutes for the standard reviewer's broader checklist |
 | **Documenter** — spawn `software-team:documenter` | Updates README/CHANGELOG/API docs/docstrings after a `PASS`, tracing every claim to the diff | Documents intended-but-unbuilt behavior; restructures docs beyond the change |
 | **Deployer** — spawn `software-team:deployer` | Runs the exact approved deploy/release/publish/push command, with the human's quoted approval in its prompt | Infers what to run; proceeds without a quoted approval line; chains a second irreversible action |
+| **Designer** — spawn `software-team:designer` | DESIGN mode: produces a UI/UX spec before PLAN for a new screen/flow. REVIEW mode: audits a UI diff for hierarchy, accessibility, responsiveness, consistency; verdict `APPROVED`/`CHANGES REQUIRED` | Edits `docs/design.md` itself; approves without a per-category evidence line |
 
 Spawn these agent types by name (`software-team:builder`, not a bare `builder` — a
 same-named agent elsewhere in the registry is a different agent with a weaker contract).
 
-Use this template for every builder/reviewer/verifier/security-reviewer spawn:
+Use this template for every builder/reviewer/verifier/security-reviewer/designer spawn
+(designer's REVIEW mode uses it exactly like the reviewer; DESIGN mode reuses the same
+fields, with `Acceptance criteria:` describing what the resulting spec must satisfy
+rather than what to verify, and no `Verify with:` line):
 
 ```
 Task: <one sentence>
@@ -276,7 +357,10 @@ A task is DONE only when, in this order:
 6. Any course-changing decision got its one line in `docs/decisions.md`.
 7. **Documentation, if the plan called for it** — `software-team:documenter` ran after
    the verifier's `PASS` and its report is included.
-8. **Any deploy/release/publish/push the task required** ran via
+8. **UI review, for any diff that changed rendered output** — `software-team:designer`
+   in REVIEW mode returned `APPROVED`; a diff that changes only logic/state/config/tests
+   (nothing rendered) skips this.
+9. **Any deploy/release/publish/push the task required** ran via
    `software-team:deployer`, with its exit code and resulting state recorded — never
    report DONE on a task whose own scope included shipping it if that step didn't
    actually run.
