@@ -95,7 +95,7 @@ inline, no reviewer round trip.
 
 ## Install
 
-Requires `python3` on `PATH` (the hooks use it). Current version: `0.1.1`.
+Requires `python3` on `PATH` (the hooks use it). Current version: `0.1.2`.
 
 1. Register the marketplace, once per machine:
 
