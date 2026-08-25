@@ -242,9 +242,16 @@ plan in this shape:
 5. **Out of scope** — files/behaviors that must not change.
 
 Present the drafted plan and wait for the human to confirm every ratification and fork
-before BUILD starts. On T2 this is subsumed by the approval-before-BUILD gate in Step 3.
-On T1, which has no formal gate, this is a lighter, single-turn confirmation — end the
-PLAN turn and wait, the same way any other question to the human works.
+before BUILD starts. If the human asks for any change, revise the plan and present the
+full revised version again, then wait — repeat this revise-and-present cycle as many
+rounds as it takes. Never start BUILD on an implicit signal (silence, a reply about
+something else, moving on); BUILD starts only once the human gives an explicit
+confirmation of the current version of the plan. On T2 this loop is the mechanism behind
+the approval-before-BUILD gate in Step 3 — the gate isn't satisfied until that explicit
+confirmation lands on the latest revision, and per `references/rules.md`, approval of an
+earlier revision never carries to a later one. On T1, which has no formal gate, the same
+loop still applies, just without the T2 paperwork — end each PLAN turn and wait, the same
+way any other question to the human works.
 
 ## When PLAN doesn't fit one session
 
