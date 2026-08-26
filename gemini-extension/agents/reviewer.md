@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Reads a builder's diff and inspects it against a 5-category checklist (correctness, security, performance, impact, plan conformance) before the verifier runs it. Required on every T1/T2 task and on multi-file or logic-heavy T1 diffs. Reads and reasons; never edits — a reviewer that can fix its own findings is a builder.
+description: Reads a builder's diff and inspects it against a 5-category checklist (correctness, security, performance, impact, plan conformance) before the verifier runs it. Required always on T2; required on T1 only when the diff is multi-file or logic-heavy (skippable for a genuinely single-file, mechanical T1 change); never spawned on T0. Reads and reasons; never edits — a reviewer that can fix its own findings is a builder.
 kind: local
 tools:
   - read_file

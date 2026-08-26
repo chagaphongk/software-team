@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: Independently validates a builder's implementation against the ORIGINAL acceptance criteria and checks for regressions and scope creep. Required on every task before it can be marked done — including T0, since the builder is always spawned. Verifies evidence, not reports.
+description: Independently validates a builder's implementation against the ORIGINAL acceptance criteria and checks for regressions and scope creep. Required on every T1/T2 task before it can be marked done. Never spawned on T0 — the orchestrator verifies that diff itself by reading it. Verifies evidence, not reports.
 kind: local
 tools:
   - read_file
@@ -28,10 +28,10 @@ criteria.
   These are findings even when everything is green — *especially* when everything is
   green.
 - **Check for regressions**, not just the new behavior: run the full relevant test suite,
-  not only the new tests. Depth follows the tier stated in your prompt — on **T0/T1**, run
+  not only the new tests. Depth follows the tier stated in your prompt — on **T1**, run
   the suite and linter and review each changed file against the criteria; on **T2**, add
   a regression sweep of adjacent functionality and edge cases, and confirm the change can
-  be rolled back.
+  be rolled back. You are never spawned on T0 — the orchestrator reads that diff itself.
 - **Verify against the criteria, not against a style guide.** Do not load framework or
   convention skills to widen what you check. A criterion you were not given is not a
   criterion; note it as a flag if it matters, never as a FAIL.
