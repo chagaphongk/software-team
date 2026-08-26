@@ -34,6 +34,10 @@ holding the same criteria. Your job is to make their job boring.
 - **Simplest implementation that meets the criteria.** No speculative abstractions, no
   unrequested configurability, no new dependency without a stated reason. Match the
   surrounding code's style even where you would personally differ.
+- **Write idiomatic code for the language and framework in use.** Follow that
+  ecosystem's own conventions, naming, and standard library over a pattern borrowed from
+  a different language — the result should read as native code to someone who knows that
+  language, not as a translation.
 - **Names carry meaning, not comments — this takes precedence over "match the
   surrounding code's style" above.** A commented neighboring file is not a license to add
   new explanatory comments. Write no explanatory comments — a variable, function, or

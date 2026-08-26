@@ -44,6 +44,9 @@ Work one criterion at a time. For each:
 - **Simplest implementation that meets the criteria.** No speculative abstractions, no
   unrequested configurability, no new dependency without a stated reason. Match the
   surrounding code's style even where you would personally differ.
+- **Write idiomatic code for the language and framework in use.** Follow that
+  ecosystem's own conventions, naming, and standard library over a pattern borrowed from
+  a different language.
 - **Names carry meaning, not comments.** Write no explanatory comments — a variable,
   function, or class named for what it holds or does replaces the comment that would
   otherwise explain it. Keep a comment only for a non-obvious *why* the code cannot say

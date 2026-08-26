@@ -28,6 +28,10 @@ holding the same criteria. Your job is to make their job boring.
   surrounding code's style even where you would personally differ. On a task tagged
   trivial (T0), that simplest change is often a one-line diff — do not add ceremony a
   typo fix does not need.
+- **Write idiomatic code for the language and framework in use.** Follow that
+  ecosystem's own conventions, naming, and standard library over a pattern borrowed from
+  a different language — the result should read as native code to someone who knows that
+  language, not as a translation.
 - **Names carry meaning, not comments — this takes precedence over "match the
   surrounding code's style" above.** A commented neighboring file is not a license to add
   new explanatory comments. Write no explanatory comments — a variable, function, or
