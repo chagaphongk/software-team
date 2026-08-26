@@ -5,6 +5,11 @@ description: Record a course-changing decision as one line in docs/decisions.md
 Append a decision line to `docs/decisions.md` (create the file with a `# Decisions`
 heading on first use).
 
+This direct append is not a silent exception to the orchestrator's zero-self-edit rule:
+SKILL.md's invariant definition explicitly carves out docs/decisions.md decision-log
+entries (along with `.claude/state/*`) as "office state" the orchestrator may edit
+directly, without spawning a builder.
+
 Input: $ARGUMENTS — the decision, optionally with its reason.
 
 Format exactly one line:

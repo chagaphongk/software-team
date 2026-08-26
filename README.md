@@ -6,9 +6,14 @@ orchestrator that classifies risk and delegates, plus spawned `researcher` / `bu
 / `designer` subagents — instead of one Claude instance role-playing hats in a single
 conversation.
 The orchestrator never edits a project file itself, at any tier: even a one-character fix
-goes through a spawned builder, so the guard hooks and the agent log can prove delegation
-happened rather than trusting a transcript. The same invariant covers shipping: deploy,
-publish, and push always run through `software-team:deployer`, never the orchestrator.
+goes through a spawned builder. This no-self-edit invariant, and the deployer-only
+invariant covering shipping (deploy, publish, and push always run through
+`software-team:deployer`, never the orchestrator), are **instruction-enforced, not
+hook-proven** — the hooks log every subagent spawn and block a destructive-command/secret
+blocklist, but Claude Code's hook payloads carry no caller identity, so there's no
+deterministic way today to prove the orchestrator made zero direct writes. One explicit
+exception: the orchestrator may directly append to "office state" — `docs/decisions.md`
+decision-log entries and `.claude/state/*` — which isn't covered by the invariant.
 Independent spawns run in parallel batches by default — three unrelated builders, or a
 reviewer alongside a security-reviewer on the same finished diff — never one at a time
 just because that's the simpler control flow.
@@ -58,8 +63,9 @@ inline, no reviewer round trip.
   approval, opus-tier subagents, a mandatory reviewer plus security-reviewer, and a
   mandatory Fable review of the finished diff.
 - **Read-only deliverables skip the plan gate** — a code review or audit spawns
-  `software-team:reviewer` (or `software-team:security-reviewer` for a security-focused
-  ask) directly; its findings are the deliverable.
+  `software-team:reviewer` directly, `software-team:security-reviewer` for a
+  security-focused audit, or both in parallel when the ask covers correctness and
+  security together; its findings are the deliverable.
 - **Full-office roster, not just build/verify** — `security-reviewer` runs a dedicated
   OWASP-class pass before DONE on T2 security-sensitive work; `documenter` updates
   README/CHANGELOG/docstrings after a `PASS`, tracing every line to the diff; `deployer`
@@ -89,13 +95,21 @@ inline, no reviewer round trip.
   writes every subagent start/stop to `.claude/state/agent-log.jsonl`; `hooks/pre_compact.py`
   marks context-compaction events so `/software-team:workflow` knows to re-read
   `docs/decisions.md` instead of trusting compacted memory.
-- **`/software-team:workflow`** — reports tier/state/verdicts from the hook-written log,
-  not conversation memory. **`/software-team:decision`** — appends a one-line,
-  course-changing decision to `docs/decisions.md`.
+- **Known limit: reviewers keep Bash.** `reviewer`, `security-reviewer`, and `verifier`
+  subagents have no Write/Edit tool, but they keep Bash access — needed for `git diff` and
+  running tests. Their read-only status is instruction-enforced, not sandboxed; nothing
+  stops a Bash command from writing a file, the role contract just says not to.
+- **`/software-team:workflow`** — reports two kinds of fact, kept distinct: hook-grounded
+  (last agent spawn/stop activity and PreCompact markers, read straight from
+  `.claude/state/agent-log.jsonl`) and conversation-derived (task, tier, state, and
+  verdicts — inferred from the conversation, then checked against the log, not read from
+  it; `log_agent.py` only ever writes a timestamp, event, agent name, and session id, so
+  it has no verdict or task-state fields to read). **`/software-team:decision`** —
+  appends a one-line, course-changing decision to `docs/decisions.md`.
 
 ## Install
 
-Requires `python3` on `PATH` (the hooks use it). Current version: `0.1.2`.
+Requires `python3` on `PATH` (the hooks use it). Current version: `0.1.3`.
 
 1. Register the marketplace, once per machine:
 
@@ -134,10 +148,11 @@ Run any trivial task (a T0-sized change), then:
 /software-team:workflow
 ```
 
-should report a tier, state, and pending gates sourced from
-`.claude/state/agent-log.jsonl` — if that file doesn't exist yet or the command says
-hooks aren't firing, the plugin installed but the hooks didn't register; re-check step 3
-(restart) before anything else.
+should report a tier, state, and pending gates — the tier/state are conversation-derived,
+checked against (not read from) `.claude/state/agent-log.jsonl`'s hook-grounded spawn/stop
+activity — if that file doesn't exist yet or the command says hooks aren't firing, the
+plugin installed but the hooks didn't register; re-check step 3 (restart) before anything
+else.
 
 ### Update
 

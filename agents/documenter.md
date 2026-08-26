@@ -38,3 +38,5 @@ differ, the diff wins and the mismatch itself is worth a line back to the orches
 Report what you changed — files and one line each on what was added or updated — capped
 at 15 lines. Flag anything you found undocumented that this diff didn't ask you to
 document (that's a note for the orchestrator, not scope you should take on yourself).
+The orchestrator reads your diff itself before marking the task DONE, the same way it
+reads a T0 builder's diff — your report is not taken on trust.

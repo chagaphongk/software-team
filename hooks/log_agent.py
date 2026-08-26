@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """SubagentStart/SubagentStop logger: appends real workflow state to .claude/state/agent-log.jsonl.
-Proof the always-delegate invariant is honored — the log shows real spawns, not role-play."""
+Records that a subagent spawn occurred; does not prove the orchestrator made no direct
+edits (hook payloads carry no caller identity)."""
 import json, os, sys, datetime
 
 data = json.load(sys.stdin)

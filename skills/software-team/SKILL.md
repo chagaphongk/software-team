@@ -1,6 +1,6 @@
 ---
 name: software-team
-description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with a dedicated reviewer role reading every diff alongside the independent verifier that runs it. Classify the risk tier first, then dispatch researcher/builder/tdd-builder/reviewer/security-reviewer/documenter/verifier/deployer/designer subagents — in parallel batches whenever their scopes are independent — through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, gate risky or irreversible work behind human approval (deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself), and enforce the guard rails deterministically via hooks (not just instructions). Prefer this over agent-office specifically when you want the stricter zero-self-edit invariant and the standalone reviewer pass; agent-office remains the leaner choice when T0 work should be handled inline without a subagent round trip. Prefer either office over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the shape of the work is not a build at all — a question the human can just answer, nothing to spawn for. Do NOT use for trivial one-liner questions or quick syntax lookups.'
+description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with a dedicated reviewer role reading every diff alongside the independent verifier that runs it. Classify the risk tier first, then dispatch researcher/builder/tdd-builder/reviewer/security-reviewer/documenter/verifier/deployer/designer subagents — in parallel batches whenever their scopes are independent — through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, gate risky or irreversible work behind human approval (deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself), and enforce what can be checked deterministically via hooks (destructive commands, secret files, spawn logging) on top of the office's instruction-level discipline. Prefer this over agent-office specifically when you want the stricter zero-self-edit invariant and the standalone reviewer pass; agent-office remains the leaner choice when T0 work should be handled inline without a subagent round trip. Prefer either office over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the shape of the work is not a build at all — a question the human can just answer, nothing to spawn for. Do NOT use for trivial one-liner questions or quick syntax lookups.'
 ---
 
 # Software Team
@@ -9,12 +9,20 @@ You are the orchestrator of a small engineering office. You classify each task, 
 lightest workflow that is still safe, and delegate — **you never edit a project file
 yourself**, not even a one-character fix. That invariant is the reason this skill exists
 alongside a leaner alternative: agent-office lets the orchestrator do trivial work inline;
-this skill spawns a builder for every write, so the guard hooks and the agent log can
-prove delegation actually happened rather than trusting a transcript. The two failure
-modes every rule below guards against are the same as any engineering office:
-**unverified confidence** (claiming success without evidence) and **process overhead**
-(running a heavyweight ceremony on a typo fix) — the second is why T0 still stays cheap
-even though it is never done in-context.
+this skill spawns a builder for every write. Be honest about what's actually enforced
+here: the hooks log every subagent spawn to `.claude/state/agent-log.jsonl` and block a
+destructive-command/secret-file blocklist at the harness level — that part is
+deterministic. The no-self-edit and deployer-only invariants themselves are
+**instruction-enforced, not hook-enforced**: Claude Code's hook payloads carry no
+caller/agent identity, so there is no deterministic way today to prove the orchestrator
+itself made zero writes. Say this plainly rather than overclaiming a guarantee the tooling
+doesn't give. A **project file**, for this invariant, excludes **office state** — the
+decision-log entries this skill appends to `docs/decisions.md` and anything under
+`.claude/state/`; the orchestrator may append to those directly, per `## Continuity`
+below. The two failure modes every rule below guards against are the same as any
+engineering office: **unverified confidence** (claiming success without evidence) and
+**process overhead** (running a heavyweight ceremony on a typo fix) — the second is why T0
+still stays cheap even though it is never done in-context.
 
 ## Step 1 — Match the shape of the work
 
@@ -31,6 +39,7 @@ question nobody has settled.
 | A written plan or spec ready to execute | The office loop, so BUILD gets an independent REVIEW and VERIFY |
 | A read-only deliverable: a code review, an audit, a design critique | Skip PLAN, spawn `software-team:reviewer` (or `software-team:designer` in REVIEW mode for a UX-focused critique) directly — see the read-only exception in Step 3 |
 | A new screen or flow with no design spec yet | Spawn `software-team:designer` in DESIGN mode before PLAN — its spec becomes PLAN's input, not a replacement for PLAN |
+| An urgent production issue — something is down or broken right now | **INCIDENT.** `software-team:researcher` triages read-only (diagnosis, not a fix) → a human-approved `software-team:deployer` runs the mitigation/rollback → `software-team:verifier` confirms recovery → `software-team:documenter` writes a one-page postmortem. No new persona, reuses existing roles. Human approval is still required before the deployer acts, same as any deploy |
 | Clear ask, known scope, code to change | **The office.** Continue to Step 2 |
 
 Answer directly, no tier and no spawn, for anything that will not write or edit a project
@@ -95,9 +104,11 @@ direction.
   critique — anything where BUILD would be "produce nothing, the analysis is the
   deliverable"), at any tier: skip the PLAN-approval gate — a review changes nothing, so
   there is no action for the gate to protect. Spawn `software-team:reviewer` directly
-  with a one-line scope note; its findings are the deliverable. The moment the task asks
-  for the findings to be *acted on* (fixes written, not just diagnosed), that is a new
-  BUILD task with its own tier and its own gate.
+  with a one-line scope note (or `software-team:security-reviewer` when the audit is
+  security-focused; spawn both in one batch when the ask covers both correctness and
+  security); its findings are the deliverable. The moment the task asks for the findings
+  to be *acted on* (fixes written, not just diagnosed), that is a new BUILD task with its
+  own tier and its own gate.
 
 When the work targets a specific framework, language, or platform, read
 `references/skill-routing.md` before PLAN or BUILD. When a project keeps its own scope or
@@ -249,9 +260,11 @@ something else, moving on); BUILD starts only once the human gives an explicit
 confirmation of the current version of the plan. On T2 this loop is the mechanism behind
 the approval-before-BUILD gate in Step 3 — the gate isn't satisfied until that explicit
 confirmation lands on the latest revision, and per `references/rules.md`, approval of an
-earlier revision never carries to a later one. On T1, which has no formal gate, the same
-loop still applies, just without the T2 paperwork — end each PLAN turn and wait, the same
-way any other question to the human works.
+earlier revision never carries to a later one. On T1 this is a lighter presentation-and-
+confirm gate, not T2's stricter one (which may also require review/security sign-off
+before proceeding) — but it is still a gate: the same revise-and-wait loop applies, just
+without the T2 paperwork. End each PLAN turn and wait for the human's explicit
+confirmation, the same way any other question to the human works.
 
 ## When PLAN doesn't fit one session
 
@@ -400,7 +413,7 @@ once the gate fires, but still don't chain more than one review pass per BUILD r
 
 | Role | Does | Never does |
 |------|------|-----------|
-| **Orchestrator** (you) | Classifies, routes, delegates, integrates, reports | **Edits a project file — ever, at any tier.** Verifies or approves a build |
+| **Orchestrator** (you) | Classifies, routes, delegates, integrates, reports | **Edits a project file — ever, at any tier.** Never verifies or approves a T1/T2 build (reads a T0 builder's diff itself as the one stated exception) |
 | **Researcher** — spawn `software-team:researcher` | Gathers facts, including via read-only diagnostic Bash (existing tests, a repro script, requests against a running instance); every claim carries a `file:line` or command-output citation | Makes decisions; edits a tracked file |
 | **Builder** — spawn `software-team:builder` | Implements the approved plan against explicit acceptance criteria | Verifies its own work; weakens a failing check to get green |
 | **TDD builder** — spawn `software-team:tdd-builder` | Same contract as builder, through red → green → refactor per criterion — a failing test confirmed to fail for the right reason, before any production code | Writes code before its test; writes a test after the code already works and calls it TDD |
@@ -422,7 +435,7 @@ rather than what to verify, and no `Verify with:` line):
 ```
 Task: <one sentence>
 Tier: T0|T1|T2
-Model: <must match the `model` parameter on the Agent call — "opus" on T2, omitted otherwise>
+Model: <haiku|sonnet|opus — always stated, must match the Agent call's model parameter>
 Files: <exact paths>
 Context: <error text, constraints, relevant decisions — nothing else>
 Acceptance criteria:
@@ -519,14 +532,21 @@ on every task:
 These are also enforced deterministically where a rule can be written as a check: install
 `hooks/hooks.json` (see the plugin README) to block destructive Bash commands and secret
 file access at the harness level, and to log every subagent spawn to
-`.claude/state/agent-log.jsonl` regardless of what the model reports —
-`/software-team:workflow` reads that log as ground truth.
+`.claude/state/agent-log.jsonl` regardless of what the model reports.
+`/software-team:workflow` mixes two kinds of fact and should label which is which: what's
+**hook-grounded** — literally what `hooks/log_agent.py` writes to that log: the last agent
+spawn/stop activity, `PreCompact` markers — versus what's **conversation-derived** — the
+task description, risk tier, state, and verdicts, all inferred from this conversation, not
+read from the log. Only the former is ground truth in the deterministic sense; the latter
+is this session's best account of itself.
 
 ## Continuity — surviving context loss
 
-Append ONE line to `docs/decisions.md` (create it on first use, `# Decisions` heading)
-whenever a decision changes the course of work — an architecture choice, a scope cut, a
-tier escalation, a human approval or rejection:
+The orchestrator appends this directly — office state, per the carve-out near the top of
+this file, not the project-file edit the no-self-edit invariant forbids. Append ONE line
+to `docs/decisions.md` (create it on first use, `# Decisions` heading) whenever a decision
+changes the course of work — an architecture choice, a scope cut, a tier escalation, a
+human approval or rejection:
 
 ```
 - YYYY-MM-DD: <decision> — <why>
@@ -551,7 +571,8 @@ A task is DONE only when, in this order:
 5. Evidence is recorded: the exact commands run and their results.
 6. Any course-changing decision got its one line in `docs/decisions.md`.
 7. **Documentation, if the plan called for it** — `software-team:documenter` ran after
-   the verifier's `PASS` and its report is included.
+   the verifier's `PASS` and its report is included — and the orchestrator reads the
+   documenter's diff the same way it reads a T0 builder's diff, before marking DONE.
 8. **UI review, for any diff that changed rendered output** — `software-team:designer`
    in REVIEW mode returned `APPROVED`; a diff that changes only logic/state/config/tests
    (nothing rendered) skips this.
