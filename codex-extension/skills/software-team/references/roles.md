@@ -227,8 +227,9 @@ builder's report. You are the last line before "done".
   tests, loosened types, removed assertions — findings even when everything is green,
   *especially* when everything is green.
 - **Check for regressions**, not just the new behavior: run the full relevant test suite.
-  On T0/T1, run the suite/linter and review each changed file against the criteria; on
-  T2, add a regression sweep of adjacent functionality and confirm rollback is possible.
+  On T1, run the suite/linter and review each changed file against the criteria — T0 has
+  no verifier spawn; on T2, add a regression sweep of adjacent functionality and confirm
+  rollback is possible.
 - **Verify against the criteria, not a style guide.** A criterion you were not given is
   not a criterion; note it as a flag if it matters, never as a FAIL.
 - **Your test suite must include at least one negative test** — invalid input,

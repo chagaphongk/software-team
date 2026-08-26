@@ -3,7 +3,9 @@
 
 Ported from the Claude Code version. Codex's apply_patch tool may carry the target path
 under a different field than a plain Read/Edit/Write call -- see hooks/PORT_NOTES.md.
-This checks every plausible field name/nesting defensively.
+This checks every plausible field name/nesting defensively, and falls back to scanning
+apply_patch's raw patch-body string for its own file-header format when no structured
+path field is present.
 """
 import json, re, sys
 
@@ -25,12 +27,39 @@ def find_path(d):
     return ""
 
 
+# Known ceiling: assumes apply_patch's real grammar uses this exact header casing/spacing;
+# a more lenient real parser could evade this fallback scan (best-effort, not the primary check).
+APPLY_PATCH_FILE_HEADER = re.compile(r"^\*\*\* (?:Add|Update|Delete) File: (.+?)\s*$", re.MULTILINE)
+APPLY_PATCH_MOVE_HEADER = re.compile(r"^\*\*\* Move to: (.+?)\s*$", re.MULTILINE)
+
+
+def find_patch_paths(d):
+    paths = []
+
+    def walk(v):
+        if isinstance(v, str):
+            paths.extend(APPLY_PATCH_FILE_HEADER.findall(v))
+            paths.extend(APPLY_PATCH_MOVE_HEADER.findall(v))
+        elif isinstance(v, dict):
+            for vv in v.values():
+                walk(vv)
+        elif isinstance(v, list):
+            for vv in v:
+                walk(vv)
+
+    walk(d)
+    return paths
+
+
 path = find_path(data)
+paths = ([path] if path else []) + find_patch_paths(data)
 
 ALLOW = re.compile(r"\.env\.(example|sample|template)$", re.IGNORECASE)
-DENY = re.compile(r"(\.env(\..+)?$|(^|/)id_rsa[^/]*$|(^|/)id_ed25519[^/]*$|\.pem$|\.key$|(^|/)(credentials?|secrets?)\.(json|ya?ml|toml)$)", re.IGNORECASE)
+DENY = re.compile(r"(\.env(\..+)?$|(^|/)\.envrc$|(^|/)id_rsa[^/]*$|(^|/)id_ed25519[^/]*$|\.pem$|\.key$|(^|/)(credentials?|secrets?)\.(json|ya?ml|toml)$)", re.IGNORECASE)
 
-if path and DENY.search(path) and not ALLOW.search(path):
-    print(f"BLOCKED by policy hook: '{path}' looks like a secret file. Ask the user to handle it.", file=sys.stderr)
-    sys.exit(2)
+for p in paths:
+    normalized = p.replace("\\", "/")
+    if DENY.search(normalized) and not ALLOW.search(normalized):
+        print(f"BLOCKED by policy hook: '{p}' looks like a secret file. Ask the user to handle it.", file=sys.stderr)
+        sys.exit(2)
 sys.exit(0)

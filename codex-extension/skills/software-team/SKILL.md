@@ -1,6 +1,6 @@
 ---
 name: software-team
-description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned sub-agent via `collaboration.spawn_agent`, with a dedicated reviewer role reading every diff alongside the independent verifier that runs it. Classify the risk tier first, then dispatch researcher/builder/tdd-builder/reviewer/security-reviewer/documenter/verifier/deployer/designer roles — each role''s full contract inlined from references/roles.md into the spawn''s task message, since Codex has no named-persona agent file — through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, gate risky or irreversible work behind human approval, and enforce the guard rails deterministically via hooks (not just instructions) where the host supports it. Prefer this over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Do NOT use for trivial one-liner questions or quick syntax lookups.'
+description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned sub-agent via `collaboration.spawn_agent`, with a dedicated reviewer role reading every diff alongside the independent verifier that runs it. Classify the risk tier first, then dispatch researcher/builder/tdd-builder/reviewer/security-reviewer/documenter/verifier/deployer/designer roles — each role''s full contract inlined from references/roles.md into the spawn''s task message, since Codex has no named-persona agent file — through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, gate risky or irreversible work behind human approval, and enforce what can be checked deterministically via hooks (destructive commands, secret files, spawn logging) on top of the office''s instruction-level discipline, where the host supports it. Prefer this over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Do NOT use for trivial one-liner questions or quick syntax lookups.'
 ---
 
 # Software Team (Codex port)
@@ -36,7 +36,7 @@ question nobody has settled.
 | New feature where the requirements themselves are unsettled | See `## Unsettled requirements before PLAN` below — the office cannot verify against criteria that don't exist yet |
 | A loose idea, too big for one session, foggy about its own destination | See `## When PLAN doesn't fit one session` below — don't draft a plan yet |
 | A written plan or spec ready to execute | The office loop, so BUILD gets an independent REVIEW and VERIFY |
-| A read-only deliverable: a code review, an audit, a design critique | Skip PLAN, spawn the `reviewer` role (or `designer` in REVIEW mode for a UX-focused critique) directly — see the read-only exception in Step 3 |
+| A read-only deliverable: a code review, an audit, a design critique | Skip PLAN, spawn the `reviewer` role (or `designer` in REVIEW mode for a UX-focused critique, or the security-reviewer role when the audit is security-focused; use both when the ask covers correctness and security together) directly — see the read-only exception in Step 3 |
 | A new screen or flow with no design spec yet | Spawn the `designer` role in DESIGN mode before PLAN — its spec becomes PLAN's input, not a replacement for PLAN |
 | Clear ask, known scope, code to change | **The office.** Continue to Step 2 |
 
@@ -75,8 +75,8 @@ direction.
   skip. Spawn `reviewer` too whenever the diff touches more than one file or changes
   logic rather than markup/config; skip it only for genuinely single-file, mechanical T1
   changes where the verifier's checks already cover it.
-- **T2 → Rigorous.** Same state machine, mandatory researcher, mandatory reviewer, and
-  **require explicit human approval of the plan before BUILD**. Approval given for one
+- **T2 → Rigorous.** Same state machine, mandatory researcher, mandatory reviewer,
+  mandatory verifier, and **require explicit human approval of the plan before BUILD**. Approval given for one
   plan never carries to a revised plan or a different task. Read `references/rules.md`
   before PLAN. Spawn `security-reviewer` before DONE whenever the work touches auth,
   payments, PII, secrets, or a public API — see Definition of done.
@@ -87,7 +87,9 @@ direction.
 - **Any diff that changes rendered UI output** — spawn `designer` in REVIEW mode before
   DONE, at every tier including T0.
 - **Read-only / analysis-only deliverables** — skip the PLAN-approval gate. Spawn
-  `reviewer` directly with a one-line scope note; its findings are the deliverable.
+  `reviewer` directly with a one-line scope note (or the security-reviewer role when the
+  audit is security-focused; use both when the ask covers correctness and security
+  together); its findings are the deliverable.
 
 When the work targets a specific framework, language, or platform, read
 `references/skill-routing.md` before PLAN or BUILD.
@@ -318,6 +320,8 @@ version of this skill (T2 work, 3+ interacting files, concurrency, a real judgme
 a second failed round), note that in the spawn's `Context:` line as a flag for the human
 — "this would normally escalate to a stronger model; consider running this spawn from a
 stronger-model session" — rather than silently treating the escalation as handled.
+Opus-class/high-stakes work still gets one fresh-context second review before DONE (same
+model — per-spawn model escalation isn't available on this host).
 
 ## The roles
 
@@ -326,7 +330,7 @@ does what.
 
 | Role | Does | Never does |
 |------|------|-----------|
-| **Orchestrator** (you) | Classifies, routes, delegates, integrates, reports | **Edits a project file — ever, at any tier.** Verifies or approves a build |
+| **Orchestrator** (you) | Classifies, routes, delegates, integrates, reports; may append `docs/decisions.md` decision-log entries and write to `.software-team/state/*` directly — the office's own state, not project deliverables | **Edits any other project file — ever, at any tier.** Never verifies or approves a T1/T2 build (reads a T0 builder's diff itself as the one stated exception) |
 | **builder** | Implements the approved plan against explicit acceptance criteria | Verifies its own work; weakens a failing check to get green |
 | **tdd-builder** | Same contract as builder, through red → green → refactor per criterion | Writes code before its test; writes a test after the code already works and calls it TDD |
 | **reviewer** | Reads the diff against a 5-category checklist; verdict `APPROVED`/`CHANGES REQUIRED` | Edits anything; approves without a per-category evidence line |
@@ -393,7 +397,12 @@ on every task:
 Where the host supports it, install `hooks/hooks.json` (see the plugin README) to block
 destructive Bash commands and secret file access at the harness level, and to log every
 subagent spawn to `.software-team/state/agent-log.jsonl` regardless of what the model
-reports. **The hook event names, matcher patterns, and tool_input field shape used here
+reports. **This does not prove or enforce the never-edit-yourself invariant** — Codex's
+hook payloads, like Claude Code's, carry no caller identity, so a hook cannot tell the
+orchestrator editing a file directly apart from a spawned sub-agent doing it; the
+invariant is instruction-enforced only. `docs/decisions.md` decision-log entries and
+`.software-team/state/*` are exempt from the invariant — the orchestrator may edit them
+directly. **The hook event names, matcher patterns, and tool_input field shape used here
 were not independently confirmed against a live Codex session at the time of this port**
 (see `hooks/hooks.json`'s own note) — read that file before relying on it.
 
@@ -430,6 +439,10 @@ A task is DONE only when, in this order:
    returned `APPROVED`; a diff that changes only logic/state/config/tests skips this.
 9. **Any deploy/release/publish/push the task required** ran via the `deployer` role,
    with its exit code and resulting state recorded.
+10. **Fresh-context second review for opus-class/high-stakes work** — where `## Model
+    routing` flagged the task as high-stakes, a second reviewer or verifier spawn ran with
+    fresh context (`fork_turns: "none"`) even though it's the same model, and its verdict
+    is recorded.
 
 Report completion plainly with the evidence. On T1/T2, close with a compact
 **traceability summary** — one line per requirement: requirement → task(s) → reviewer

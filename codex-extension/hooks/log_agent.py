@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """SubagentStart/SubagentStop logger: appends real workflow state to
-.software-team/state/agent-log.jsonl. Proof the always-delegate invariant is honored --
-the log shows real collaboration.spawn_agent calls, not role-play.
+.software-team/state/agent-log.jsonl. Records that a subagent spawn occurred; does not
+prove the orchestrator made no direct edits (hook payloads carry no caller identity).
 
 Ported from the Claude Code version. Field names inside the hook payload were not
 confirmed by live testing on Codex -- see hooks/PORT_NOTES.md -- so this looks up
