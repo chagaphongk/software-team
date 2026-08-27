@@ -32,9 +32,9 @@ question nobody has settled.
 
 | Signal in the request | Where it goes |
 |---|---|
-| A bug, a failing test, behavior nobody can explain | See `## Debugging before PLAN` below — reproduce and trace the real cause before drafting anything |
-| New feature where the requirements themselves are unsettled | See `## Unsettled requirements before PLAN` below — the office cannot verify against criteria that don't exist yet |
-| A loose idea, too big for one session, foggy about its own destination | See `## When PLAN doesn't fit one session` below — don't draft a plan yet |
+| A bug, a failing test, behavior nobody can explain | See `## Debugging before PLAN` below (`references/debugging-before-plan.md`) — reproduce and trace the real cause before drafting anything |
+| New feature where the requirements themselves are unsettled | See `## Unsettled requirements before PLAN` below (`references/unsettled-requirements.md`) — the office cannot verify against criteria that don't exist yet |
+| A loose idea, too big for one session, foggy about its own destination | See `## When PLAN doesn't fit one session` below (`references/plan-sizing.md`) — don't draft a plan yet |
 | A written plan or spec ready to execute | The office loop, so BUILD gets an independent REVIEW and VERIFY |
 | A read-only deliverable: a code review, an audit, a design critique | Skip PLAN, spawn the `reviewer` role (or `designer` in REVIEW mode for a UX-focused critique, or the security-reviewer role when the audit is security-focused; use both when the ask covers correctness and security together) directly — see the read-only exception in Step 3 |
 | A new screen or flow with no design spec yet | Spawn the `designer` role in DESIGN mode before PLAN — its spec becomes PLAN's input, not a replacement for PLAN |
@@ -85,7 +85,9 @@ direction.
 - **Documentation update** — spawn `documenter` after the verifier's `PASS` (and the
   reviewer's `APPROVED`, where spawned).
 - **Any diff that changes rendered UI output** — spawn `designer` in REVIEW mode before
-  DONE, at every tier including T0.
+  DONE, at every tier including T0, **except** a diff that changes only text content
+  (copy, a doc string, a comment) with no layout/style/structure change — the
+  orchestrator's own T0 diff-read already covers that.
 - **Read-only / analysis-only deliverables** — skip the PLAN-approval gate. Spawn
   `reviewer` directly with a one-line scope note (or the security-reviewer role when the
   audit is security-focused; use both when the ask covers correctness and security
@@ -114,7 +116,11 @@ There is no named-agent lookup. For every spawn:
 Task: <one sentence>
 Tier: T0|T1|T2
 Files: <exact paths>
-Context: <error text, constraints, relevant decisions — nothing else>
+Baseline: <git diff <sha>..HEAD -- <paths>, or "new file" — the exact boundary of what
+  changed, so a review/verify spawn doesn't have to rediscover it>
+Context: <error text, constraints, relevant decisions, and — where a researcher ran — its
+  Evidence lines (file:line citations) forwarded verbatim so the builder doesn't re-derive
+  what the researcher already established; nothing beyond that>
 Acceptance criteria:
 1. <testable statement>
 2. <testable statement>
@@ -190,61 +196,17 @@ deciding the next step.
 
 ## Debugging before PLAN
 
-A bug report names a symptom, not a cause. Route it through this before drafting
-anything — spawn the `researcher` role with these steps as its task. Do the steps
-yourself only for a repro so trivial there's nothing to delegate.
-
-1. **Reproduce** — get a reliable repro first: the exact input/command/request that
-   triggers it, confirmed to actually fail. **If the failure is intermittent or
-   timing-dependent**, a single pass/fail proves nothing — state a hit rate over N
-   repeated attempts, varying the relevant parameter across the runs.
-2. **Trace** — follow the real failure path: the actual stack trace or error output, not
-   an assumed one. For a concurrency bug, trace specifically for where an "already
-   happened" guard exists (or should) and whether it sits before or after the operation
-   it's meant to guard.
-3. **Hypothesize, then falsify** — form one concrete hypothesis for the root cause, then
-   try to prove it wrong before believing it. For a race or timing bug, use logging plus
-   repeated automated runs, never a debugger break — pausing execution changes the timing
-   window you're trying to observe.
-4. **Cross-reference** — check whether the same root cause reaches other callers or
-   paths: grep for the pattern elsewhere, check `git blame`/history, check for related
-   past fixes.
-
-Once the root cause is confirmed — not assumed — this becomes a normal PLAN per
-`## PLAN output shape`, with one addition to the acceptance criteria: a regression test
-that reproduces the original failure and fails without the fix. BUILD for this PLAN
-spawns the `tdd-builder` role, not the general builder — the regression test IS its first
-red step, written and confirmed failing before the fix.
+A bug report names a symptom, not a cause. Read `references/debugging-before-plan.md`
+before drafting anything — it holds the reproduce/trace/falsify/cross-reference sequence
+that must complete before PLAN starts, and the regression-test addition PLAN needs once
+the root cause is confirmed.
 
 ## Unsettled requirements before PLAN
 
-"Add a thing" without a clear shape isn't yet a task the office can plan against — PLAN's
-acceptance criteria need a settled destination to test against.
-
-**Brand-new, large work first routes to a dedicated brainstorming skill when one is
-installed**: a greenfield feature or product whose requirement space is itself wide
-deserves a full intent/design exploration, and that skill's output becomes this section's
-settled input. **Routing out is not handing off the task**: when the brainstorm
-concludes, come back here and carry its settled requirements straight into `## PLAN
-output shape` and the normal office loop — the office still builds, reviews, and verifies
-what the brainstorm decided. The steps below are the self-contained path — use them when
-no such skill is installed, or when the work is small enough that a few direct questions
-settle it. Before drafting anything:
-
-1. **State your current understanding** in one or two lines — what you think is being
-   asked — so the human can correct a wrong assumption cheaply, before it costs a full
-   BUILD/REVIEW/VERIFY round trip instead of one turn. If the current directory doesn't
-   look like the codebase the request is actually about, say that plainly as the first
-   thing — don't draft product-shaped forks against the wrong target.
-2. **Surface every genuinely open question as an explicit fork**, per
-   `## Asking the human`: concrete options (2–4), one marked recommended, the cost of
-   each. Never a bare "what do you want?"
-3. **Stop and wait.** Don't draft PLAN speculatively "in case" the human picks the option
-   you'd have guessed.
-
-Once every fork here resolves, the request has a destination — proceed to
-`## PLAN output shape` (or `## When PLAN doesn't fit one session` if resolving these
-questions reveals the work is actually oversized).
+"Add a thing" without a clear shape isn't yet a task the office can plan against. Read
+`references/unsettled-requirements.md` before drafting anything — it routes brand-new,
+wide-open work to a brainstorming skill when one is installed, and gives the
+self-contained state-understanding/surface-forks/stop-and-wait sequence otherwise.
 
 ## PLAN output shape
 
@@ -269,46 +231,11 @@ before BUILD starts. On T2 this is subsumed by the approval-before-BUILD gate in
 
 ## When PLAN doesn't fit one session
 
-Some tasks only reveal their true size once you start drafting. Use these terms: a
-**fork** (options that genuinely diverge, already sharp enough to ask) versus **fog** (a
-question you can tell is coming but can't yet phrase sharply enough to act on).
-
-**Stay inline** for the ordinary case — one or two forks, each answerable by asking the
-human a direct question: draft the plan as normal, with each fork as an explicit question
-in Step 3 of `## PLAN output shape`.
-
-**Prefer a dedicated wayfinding/decision-map skill when one is installed** for work that
-won't finish in one session — a fix or feature spanning sessions is exactly its shape.
-Recommend the human invoke it, handing off the draft destination, the forks, and the fog
-so charting doesn't start cold; its map then owns the multi-session continuity instead of
-the Phase Map below. **The map replaces the Phase Map, not the office loop**: each ticket
-the map marks ready to build comes back through the office as a normal task — its own
-`## PLAN output shape`, tier, and BUILD → REVIEW → VERIFY cycle — and its completion is
-reported back to the map, so charting and building alternate until the destination is
-reached.
-
-**Break into phases** when the sizing signals hold and no wayfinding skill is installed —
-don't force a plan that's likely to break on contact with the work just to have something
-to present. Draft a **Phase Map** instead of a single PLAN, and present it for approval
-before drafting Phase 1's actual plan:
-
-```
-This is bigger than one plan — [N] forks, and [what's still too foggy to phase yet].
-Proposed phase breakdown instead of a plan likely to break on contact:
-
-Destination (draft): <best one-line attempt, marked as a draft — may sharpen as phases close>
-Phase 1: <name> — <what it covers, sized to fit one PLAN -> BUILD -> REVIEW -> VERIFY cycle>
-Phase 2: <name> — <...>
-Forks that decide phase order/scope: <list, one line each — put to the human, not answered for them>
-Fog: <what's clearly coming but not sharp enough to phase yet>
-
-Confirm the phase breakdown (and the forks above), or tell me to adjust it — Phase 1 gets
-its own PLAN once this is approved.
-```
-
-Once the human confirms the breakdown, draft `## PLAN output shape` for Phase 1 only.
-Close each phase through the normal office loop and log the phase's completion as a
-course-changing decision in `docs/decisions.md`.
+Some tasks only reveal their true size once you start drafting. Read
+`references/plan-sizing.md` when the sizing signals in `## PLAN output shape` fire — it
+distinguishes a **fork** from **fog**, covers the wayfinding-skill handoff for
+multi-session work, and gives the Phase Map shape for breaking an oversized plan into
+phases.
 
 ## Model routing
 
@@ -316,12 +243,21 @@ Codex does not expose a per-spawn model-tier selector the way Claude Code's `Age
 does (no confirmed `model` field on `collaboration.spawn_agent` at the time of this
 port). Every sub-agent runs on whatever model the top-level session is using. Where a
 task's risk or complexity would call for escalating to a stronger model under the Claude
-version of this skill (T2 work, 3+ interacting files, concurrency, a real judgment call,
-a second failed round), note that in the spawn's `Context:` line as a flag for the human
-— "this would normally escalate to a stronger model; consider running this spawn from a
-stronger-model session" — rather than silently treating the escalation as handled.
-Opus-class/high-stakes work still gets one fresh-context second review before DONE (same
-model — per-spawn model escalation isn't available on this host).
+version of this skill (T2 work, 3+ interacting files, concurrency, a real judgment call, a
+round that already failed **on a finding against the build itself** — REVIEW `CHANGES
+REQUIRED` or VERIFY `FAIL` on an acceptance criterion), note that in the spawn's
+`Context:` line as a flag for the human — "this would normally escalate to a stronger
+model; consider running this spawn from a stronger-model session" — rather than silently
+treating the escalation as handled. A VERIFY `BLOCKED`, or a round that failed because the
+spawn's own prompt/acceptance criteria were wrong rather than the model's work, is not
+this signal — fix the prompt and re-spawn without the flag; it still counts toward the
+shared 3-round cap in `## When BUILD/REVIEW/VERIFY can't converge`.
+
+**Fresh-context second review, once per task — not once per spawn.** If any spawn in the
+task is opus-class/high-stakes work, the task gets **one** fresh-context second review
+before DONE over the **full integrated diff** (every high-stakes spawn's changes
+together), not one review per high-stakes spawn — same model, since per-spawn model
+escalation isn't available on this host.
 
 ## The roles
 
@@ -363,6 +299,12 @@ the cap, and never silently pick (a) yourself.
 **BLOCKED never resolves into a verdict at your own hand.** If you execute a BLOCKED
 verifier's run-it-yourself checklist, the resulting verdict must still come from the
 verifier — re-spawn it with the real output as new evidence.
+
+**A fix-round re-spawn is not a cold start.** Its `Context:` line carries the prior
+round's verdict findings verbatim (the reviewer's `CHANGES REQUIRED` items, the verifier's
+`FAIL` detail, or the fresh-context second review's finding) plus the prior builder's
+files-changed list — the point of a fix round is to close a known gap, not re-derive the
+whole build context from scratch.
 
 ## Asking the human
 
@@ -436,13 +378,14 @@ A task is DONE only when, in this order:
 7. **Documentation, if the plan called for it** — `documenter` ran after the verifier's
    `PASS` and its report is included.
 8. **UI review, for any diff that changed rendered output** — `designer` in REVIEW mode
-   returned `APPROVED`; a diff that changes only logic/state/config/tests skips this.
+   returned `APPROVED`; a diff that changes only logic/state/config/tests, or only text
+   content within an otherwise-unchanged UI structure, skips this.
 9. **Any deploy/release/publish/push the task required** ran via the `deployer` role,
    with its exit code and resulting state recorded.
-10. **Fresh-context second review for opus-class/high-stakes work** — where `## Model
-    routing` flagged the task as high-stakes, a second reviewer or verifier spawn ran with
-    fresh context (`fork_turns: "none"`) even though it's the same model, and its verdict
-    is recorded.
+10. **Fresh-context second review, once per task, for opus-class/high-stakes work** —
+    where `## Model routing` flagged the task as high-stakes, one second reviewer or
+    verifier spawn ran with fresh context (`fork_turns: "none"`) over the combined diff
+    even when multiple high-stakes spawns contributed, and its verdict is recorded.
 
 Report completion plainly with the evidence. On T1/T2, close with a compact
 **traceability summary** — one line per requirement: requirement → task(s) → reviewer

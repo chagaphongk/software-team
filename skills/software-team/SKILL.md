@@ -33,9 +33,9 @@ question nobody has settled.
 
 | Signal in the request | Where it goes |
 |---|---|
-| A bug, a failing test, behavior nobody can explain | See `## Debugging before PLAN` below — reproduce and trace the real cause before drafting anything |
-| New feature where the requirements themselves are unsettled | See `## Unsettled requirements before PLAN` below — the office cannot verify against criteria that don't exist yet |
-| A loose idea, too big for one session, foggy about its own destination | See `## When PLAN doesn't fit one session` below — don't draft a plan yet |
+| A bug, a failing test, behavior nobody can explain | See `## Debugging before PLAN` below (`references/debugging-before-plan.md`) — reproduce and trace the real cause before drafting anything |
+| New feature where the requirements themselves are unsettled | See `## Unsettled requirements before PLAN` below (`references/unsettled-requirements.md`) — the office cannot verify against criteria that don't exist yet |
+| A loose idea, too big for one session, foggy about its own destination | See `## When PLAN doesn't fit one session` below (`references/plan-sizing.md`) — don't draft a plan yet |
 | A written plan or spec ready to execute | The office loop, so BUILD gets an independent REVIEW and VERIFY |
 | A read-only deliverable: a code review, an audit, a design critique | Skip PLAN, spawn `software-team:reviewer` (or `software-team:designer` in REVIEW mode for a UX-focused critique) directly — see the read-only exception in Step 3 |
 | A new screen or flow with no design spec yet | Spawn `software-team:designer` in DESIGN mode before PLAN — its spec becomes PLAN's input, not a replacement for PLAN |
@@ -97,9 +97,11 @@ direction.
   verifier's `PASS` (and the reviewer's `APPROVED`, where spawned).
 - **Any diff that changes rendered UI output** (components, pages, layouts, styles,
   templates) — spawn `software-team:designer` in REVIEW mode before DONE, at every tier
-  including T0. It can run in the same parallel batch as `software-team:reviewer` (see
-  `## Parallel work` below) since neither depends on the other's output, only on the same
-  finished diff.
+  including T0, **except** a diff that changes only text content (copy, a doc string, a
+  comment) with no layout/style/structure change — the orchestrator's own T0 diff-read
+  already covers a text-only edit the same way it covers any other T0 change. It can run
+  in the same parallel batch as `software-team:reviewer` (see `## Parallel work` below)
+  since neither depends on the other's output, only on the same finished diff.
 - **Read-only / analysis-only deliverables** (a code review, a security audit, a design
   critique — anything where BUILD would be "produce nothing, the analysis is the
   deliverable"), at any tier: skip the PLAN-approval gate — a review changes nothing, so
@@ -159,80 +161,17 @@ verification, and the same evidence discipline as if it had run alone.
 
 ## Debugging before PLAN
 
-A bug report names a symptom, not a cause. Route it through this before drafting
-anything — spawn `software-team:researcher` with these steps as its `Task:` (it holds
-`Bash` for exactly this: running a repro script, existing tests, or requests against a
-running instance is investigation, not building — see its contract). Do the steps
-yourself only for a repro so trivial there's nothing to delegate. Don't let PLAN start
-until step 3 has actually happened, not just been assumed:
-
-1. **Reproduce** — get a reliable repro first: the exact input/command/request that
-   triggers it, confirmed to actually fail. A fix for a bug you haven't reproduced is a
-   guess wearing a diff. **If the failure is intermittent or timing-dependent** (a race,
-   a flake, "sometimes"), a single pass/fail proves nothing — state a hit rate over N
-   repeated attempts (e.g. "12/50 failed with a 50ms stagger between two concurrent
-   requests"), varying the relevant parameter (delay, concurrency, load) across the runs
-   instead of repeating one identical case.
-2. **Trace** — follow the real failure path: the actual stack trace or error output, not
-   an assumed one; read the code the trace actually passes through, not the code you'd
-   expect it to pass through. For a concurrency bug, trace specifically for where an
-   "already happened" guard exists (or should) and whether it sits before or after the
-   operation it's meant to guard.
-3. **Hypothesize, then falsify** — form one concrete hypothesis for the root cause, then
-   try to prove it wrong before believing it. Pick the falsification method the bug
-   shape actually allows: a targeted log line or a minimal isolating test for a
-   deterministic bug; **for a race or timing bug, use logging plus repeated automated
-   runs, never a debugger break** — pausing execution changes the timing window you're
-   trying to observe, so it can hide the very race you're testing for. A hypothesis that
-   survives an honest attempt to break it is worth building a fix on.
-4. **Cross-reference** — check whether the same root cause reaches other callers or
-   paths: grep for the pattern elsewhere, check `git blame`/history for when it was
-   introduced, check for related past fixes. A fix scoped only to the reported symptom
-   leaves siblings broken.
-
-Once the root cause is confirmed — not assumed — this becomes a normal PLAN per
-`## PLAN output shape`, with one addition to the acceptance criteria: a regression test
-that reproduces the original failure and fails without the fix. **For a bug that's
-inherently flaky**, a single deterministic assert isn't achievable — the acceptance
-criterion instead states the hit rate the fix must drive to zero (or near-zero) over a
-stated N runs, or verifies the structural guard directly (e.g. a DB unique constraint or
-an idempotency check the verifier can confirm statically), rather than chasing a test
-that "always" passes for a bug that never always failed. BUILD for this PLAN spawns
-`software-team:tdd-builder`, not the general builder — the regression test IS its first
-red step, written and confirmed failing before the fix, not added after.
+A bug report names a symptom, not a cause. Read `references/debugging-before-plan.md`
+before drafting anything — it holds the reproduce/trace/falsify/cross-reference sequence
+that must complete before PLAN starts, and the regression-test addition PLAN needs once
+the root cause is confirmed.
 
 ## Unsettled requirements before PLAN
 
-"Add a thing" without a clear shape isn't yet a task the office can plan against — PLAN's
-acceptance criteria need a settled destination to test against.
-
-**Brand-new, large work first routes to a dedicated brainstorming skill when one is
-installed** (`superpowers:brainstorming` under Claude Code): a greenfield feature or
-product whose requirement space is itself wide deserves a full intent/design exploration,
-and that skill's output becomes this section's settled input. **Routing out is not
-handing off the task**: when the brainstorm concludes, come back here and carry its
-settled requirements straight into `## PLAN output shape` and the normal office loop —
-the office still builds, reviews, and verifies what the brainstorm decided. The steps
-below are the self-contained path — use them when no such skill is installed, or when the
-work is small enough that a few direct questions settle it. Before drafting anything:
-
-1. **State your current understanding** in one or two lines — what you think is being
-   asked — so the human can correct a wrong assumption cheaply, before it costs a full
-   BUILD/REVIEW/VERIFY round trip instead of one turn. If the current directory doesn't
-   look like the codebase the request is actually about (no matching app/service found,
-   or the request names a system this repo isn't), say that plainly as the first thing —
-   don't draft product-shaped forks against the wrong target.
-2. **Surface every genuinely open question as an explicit fork**, per
-   `## Asking the human`: concrete options (2–4), one marked recommended, the cost of
-   each. Never a bare "what do you want?" — that pushes the thinking the office is
-   supposed to do back onto the human.
-3. **Stop and wait.** Don't draft PLAN speculatively "in case" the human picks the option
-   you'd have guessed — a guessed destination that turns out wrong is the exact round
-   trip step 1 exists to avoid.
-
-Once every fork here resolves, the request has a destination — proceed to
-`## PLAN output shape` (or `## When PLAN doesn't fit one session` if resolving these
-questions reveals the work is actually oversized).
+"Add a thing" without a clear shape isn't yet a task the office can plan against. Read
+`references/unsettled-requirements.md` before drafting anything — it routes brand-new,
+wide-open work to a brainstorming skill when one is installed, and gives the
+self-contained state-understanding/surface-forks/stop-and-wait sequence otherwise.
 
 ## PLAN output shape
 
@@ -268,59 +207,10 @@ confirmation, the same way any other question to the human works.
 
 ## When PLAN doesn't fit one session
 
-Some tasks only reveal their true size once you start drafting: the "one clear ask" from
-Step 1 turns out to hide several genuinely diverging forks, or an acceptance criterion
-can't be written because an earlier step first needs its own investigation. Use these
-terms for the two things that can be wrong with a plan's size: a **fork** (options that
-genuinely diverge, not yet decided — already sharp enough to put to the human) versus
-**fog** (a question you can tell is coming but can't yet phrase sharply enough to act on
-at all — coarser than a fork, not yet ready to ask).
-
-**Stay inline** for the ordinary case — one or two forks, each answerable by asking the
-human a direct question, nothing that needs its own multi-session investigation: draft
-the plan as normal, with each fork as an explicit question in Step 3 of `## PLAN output
-shape`. Most T1/T2 tasks never leave this path.
-
-**Prefer `wayfinder` when it is installed** for work that won't finish in one session — a
-fix or feature spanning sessions is exactly its shape. Recommend the human invoke
-`/wayfinder`, handing off the draft destination, the forks, and the fog so charting
-doesn't start cold; its decision-ticket map then owns the multi-session continuity
-instead of the Phase Map below. **The map replaces the Phase Map, not the office loop**:
-each ticket the map marks ready to build comes back through the office as a normal task —
-its own `## PLAN output shape`, tier, and BUILD → REVIEW → VERIFY cycle — and its
-completion is reported back to the map, so charting and building alternate until the
-destination is reached.
-
-**Break into phases** when the sizing signals hold and no wayfinding skill is installed —
-don't force a plan that's likely to break on contact with the work just to have something
-to present. Draft a **Phase Map** instead of a single PLAN, and present it for approval
-before drafting Phase 1's actual plan:
-
-```
-This is bigger than one plan — [N] forks, and [what's still too foggy to phase yet].
-Proposed phase breakdown instead of a plan likely to break on contact:
-
-Destination (draft): <best one-line attempt, marked as a draft — may sharpen as phases close>
-Phase 1: <name> — <what it covers, sized to fit one PLAN -> BUILD -> REVIEW -> VERIFY cycle>
-Phase 2: <name> — <...>
-Forks that decide phase order/scope: <list, one line each — put to the human, not answered for them>
-Fog: <what's clearly coming but not sharp enough to phase yet>
-
-Confirm the phase breakdown (and the forks above), or tell me to adjust it — Phase 1 gets
-its own PLAN once this is approved.
-```
-
-Never silently draft a monolithic plan for work you've just told the human is too big for
-one — that's the exact failure this section exists to catch. Once the human confirms the
-breakdown, draft `## PLAN output shape` for Phase 1 only. Close each phase through the
-normal office loop (RESEARCH → PLAN → BUILD → REVIEW → VERIFY → DONE) exactly as for any
-other task, and log the phase's completion as a course-changing decision in
-`docs/decisions.md` — reuse that existing continuity mechanism rather than a new
-artifact. Re-check the sizing signals before drafting each later phase's PLAN: a phase
-can itself turn out oversized once its own detail becomes visible, and fog can graduate
-into new phases the original breakdown didn't foresee — update the Phase Map and re-confirm
-with the human when that happens, rather than quietly absorbing the change into whichever
-phase is in progress.
+Some tasks only reveal their true size once you start drafting. Read
+`references/plan-sizing.md` when the sizing signals in `## PLAN output shape` fire — it
+distinguishes a **fork** from **fog**, covers the wayfinder handoff for multi-session
+work, and gives the Phase Map shape for breaking an oversized plan into phases.
 
 ## Model routing
 
@@ -347,10 +237,15 @@ Complex/hard triggers on any of:
   mechanical check (e.g. "handle this ambiguous edge case sensibly" instead of a testable
   statement) — if you find yourself unable to write a crisp acceptance criterion, that
   itself is a complexity signal, not just a PLAN-quality problem.
-- A build/review/verify round already failed once on this task (round ≥ 2 in the
-  BUILD/REVIEW/VERIFY loop) — a second attempt repeating the first attempt's blind spot
-  at the same model is the expensive failure mode; escalate for the retry even if the
-  tier itself doesn't change.
+- A build/review/verify round already failed **on a finding against the build itself** —
+  REVIEW `CHANGES REQUIRED` or VERIFY `FAIL` on an acceptance criterion (round ≥ 2 in the
+  BUILD/REVIEW/VERIFY loop) — a second attempt repeating the first attempt's blind spot at
+  the same model is the expensive failure mode; escalate for the retry even if the tier
+  itself doesn't change. A VERIFY `BLOCKED`, or a round that failed because the spawn's own
+  prompt/acceptance criteria were wrong (a missing dependency, a mistyped `Verify with:`
+  command) rather than the model's work, is not this signal — fix the prompt and re-spawn
+  at the same model; it still counts toward the shared 3-round cap in `## When
+  BUILD/REVIEW/VERIFY can't converge`, but doesn't force a model escalation on its own.
 - Architecture or planning with real trade-offs, or a cross-cutting/hard-to-reverse
   design — this was already routed to a Fable planning consult below; treat it as
   complex/hard for model purposes too.
@@ -362,6 +257,15 @@ Complex/hard triggers on any of:
 | T0 | Haiku |
 | T1 | Sonnet |
 | T2 | **Opus** — and every T2 spawn is complex/hard by definition for the Fable-review rule below, regardless of whether the difficulty signals above also fire |
+
+**Exception — deployer-shaped T2 builds.** When the human-approved T2 plan fully specifies
+the exact diff content (e.g. one config value, a verbatim connection-string swap) and
+leaves the builder no judgment call, the builder may run at the T1 sonnet floor instead of
+opus — the reviewer, verifier, security-reviewer (where spawned), and the mandatory Fable
+review all still run at the T2/opus floor unchanged. State the reason ("plan fully
+specifies the diff, no judgment left") in the spawn's `Context:` line. Any doubt about
+whether the plan is truly fully-specified defaults back to the opus floor — this exception
+never justifies guessing.
 
 Escalation is one-way within a task in both directions: if a task turns out riskier than
 classified, move the tier up and stay there; if a spawn's difficulty turns out higher
@@ -379,12 +283,16 @@ when there's nothing left to decide); `designer` in DESIGN mode follows the diff
 scale above (haiku for a trivial layout tweak, opus for a genuinely novel flow with no
 comparable pattern to follow), and in REVIEW mode matches the paired reviewer's model.
 
-**Mandatory Fable review for complex/hard work.** Any spawn built at opus — whether from
-a T2 risk floor or a complexity escalation within T1 — gets one Fable review pass on the
-**finished, already-verified diff** before DONE, in addition to the normal
-reviewer/verifier: spawn Fable once, no `Write`/`Edit` tools, with the diff, the
-acceptance criteria, and the question "does this hold up — anything a top-tier read would
-catch that the standard review pass might not?" Treat what comes back as a finding to
+**Mandatory Fable review for complex/hard work — once per task, not once per spawn.** If
+any spawn in the task built at opus — whether from a T2 risk floor or a complexity
+escalation within T1 — the task gets **one** Fable review pass on the finished,
+already-verified diff before DONE, in addition to the normal reviewer/verifier: spawn
+Fable once, no `Write`/`Edit` tools, with the **full integrated diff** (every opus spawn's
+changes together, not spawn-by-spawn), the acceptance criteria, and the question "does
+this hold up — anything a top-tier read would catch that the standard review pass might
+not?" A T2 task with N parallel opus builders (see `## Parallel work`) still gets exactly
+one Fable pass, over the combined diff, after each builder's own review/verify has passed
+— not N passes. Treat what comes back as a finding to
 weigh, not a verdict: a real concern routes back to BUILD like any other REVIEW
 `CHANGES REQUIRED` (counts toward the shared 3-round cap in
 `## When BUILD/REVIEW/VERIFY can't converge`); nothing found closes DONE as normal, and
@@ -437,7 +345,11 @@ Task: <one sentence>
 Tier: T0|T1|T2
 Model: <haiku|sonnet|opus — always stated, must match the Agent call's model parameter>
 Files: <exact paths>
-Context: <error text, constraints, relevant decisions — nothing else>
+Baseline: <git diff <sha>..HEAD -- <paths>, or "new file" — the exact boundary of what
+  changed, so a review/verify spawn doesn't have to rediscover it>
+Context: <error text, constraints, relevant decisions, and — where a researcher ran — its
+  Evidence lines (file:line citations) forwarded verbatim so the builder doesn't re-derive
+  what the researcher already established; nothing beyond that>
 Acceptance criteria:
 1. <testable statement>
 2. <testable statement>
@@ -498,6 +410,12 @@ keep looping past the cap, and never silently pick (a) yourself.
 **BLOCKED never resolves into a verdict at your own hand.** If you execute a BLOCKED
 verifier's run-it-yourself checklist, the resulting verdict must still come from the
 verifier — re-spawn it with the real output as new evidence.
+
+**A fix-round re-spawn is not a cold start.** Its `Context:` line carries the prior
+round's verdict findings verbatim (the reviewer's `CHANGES REQUIRED` items, the verifier's
+`FAIL` detail, or the Fable finding) plus the prior builder's files-changed list — the
+point of a fix round is to close a known gap, not re-derive the whole build context from
+scratch.
 
 ## Asking the human
 
@@ -575,14 +493,17 @@ A task is DONE only when, in this order:
    documenter's diff the same way it reads a T0 builder's diff, before marking DONE.
 8. **UI review, for any diff that changed rendered output** — `software-team:designer`
    in REVIEW mode returned `APPROVED`; a diff that changes only logic/state/config/tests
-   (nothing rendered) skips this.
+   (nothing rendered), or only text content within an otherwise-unchanged UI structure,
+   skips this.
 9. **Any deploy/release/publish/push the task required** ran via
    `software-team:deployer`, with its exit code and resulting state recorded — never
    report DONE on a task whose own scope included shipping it if that step didn't
    actually run.
-10. **Fable review, for any spawn that ran at opus** — per `## Model routing`'s mandatory
-    complex/hard rule, whether opus was reached via T2's risk floor or a complexity
-    escalation. Its finding (clean, or routed back through a fix round) is recorded here.
+10. **Fable review, once per task, for any task with at least one spawn that ran at
+    opus** — per `## Model routing`'s mandatory complex/hard rule, whether opus was
+    reached via T2's risk floor or a complexity escalation, run once over the combined
+    diff even when multiple opus spawns contributed. Its finding (clean, or routed back
+    through a fix round) is recorded here.
 
 Report completion plainly with the evidence. On T1/T2, close with a compact
 **traceability summary** — one line per requirement: requirement → task(s) → reviewer
