@@ -64,12 +64,16 @@ if scope grows or new risk appears.
 | Tier | What it covers | Examples |
 |------|----------------|----------|
 | **T0 — Trivial** | Reversible AND doesn't change logic or business rules — regardless of file count | Typos, comments, docs, a mechanical multi-file rename |
+| **T0.5 — Small** | Reversible, does change logic, but scoped and low-judgment: requirements explicit with no unresolved fork, ≤3 files, follows an existing codebase pattern, no new dependency/abstraction/schema/public contract, root cause already known if it's a bug fix, no auth/payments/PII/secrets/migration/production-config/deploy/external side effect | A small bug fix with a confirmed root cause, a well-understood helper function, a config value change following an existing pattern |
 | **T1 — Standard** | Multi-file changes, features, bug fixes with tests available | New endpoint, bug fix, refactor across modules |
 | **T2 — High-risk** | Auth, payments, data migration, deleting data or an external/operational resource (not a tracked source file — see hard rule #2), production config, public APIs, security policies, anything hard to reverse | Access-control rules, schema migration, deploy config |
 
 Access-control and permission logic is always T2, even when it looks like routine code —
 it is the security layer in code form, and a wrong rule fails silently in the worst
-direction.
+direction. T0.5 is a bar every one of its conditions must clear, not a vibe — any doubt
+about scope, pattern-fit, or root cause defaults up to T1, the same way any doubt about
+the T2 fully-specified exception defaults up to the top-tier model in `## Model
+routing`.
 
 ## Step 3 — Route by tier
 
@@ -78,6 +82,29 @@ direction.
   tier, Flash-Lite class, for the mechanical case T0 usually is), with a one-line
   acceptance criterion. Verify it yourself by reading the diff; no researcher, reviewer,
   or verifier spawn. The ceremony that stays cut on T0 is everyone *except* the builder.
+- **T0.5 → Small path.** `PLAN → BUILD → VERIFY → REVIEW → DONE`, for a task that clears
+  every T0.5 bar in Step 2. The orchestrator writes a compact plan itself — destination,
+  files, 1–3 acceptance criteria, an `Out of scope:` line, the verify command — and
+  proceeds without waiting for a confirmation round: the human's own scoped request
+  already authorizes this reversible, low-judgment work. Stop and present the plan for
+  confirmation the normal T1 way, instead, the moment drafting it turns up a fork, a
+  scope increase, or anything that fails a T0.5 bar — then reclassify as T1/T2 and
+  restart Step 2, don't force it into T0.5. Spawn one `builder` (or `tdd-builder` for a
+  bug fix, same rule as T1) at the T1 floor (the balanced tier, Flash class).
+  `verifier` runs next against the stated acceptance criteria — same as T1, no skip.
+  Only once VERIFY passes, spawn `reviewer`, scoped to correctness, regression risk, and
+  scope creep rather than the full 5-category checklist a T1/T2 review runs. A REVIEW
+  `CHANGES REQUIRED` or VERIFY `FAIL` sends it back through BUILD → VERIFY → REVIEW,
+  counted against the shared 3-round cap in `## When BUILD/REVIEW/VERIFY can't converge`
+  like any other tier. No researcher, no Deep Think, no decision-log entry (the plan
+  itself wasn't a course-changing decision) — and no documenter/designer spawn unless the
+  diff independently triggers their own rule elsewhere in this skill (a documented
+  interface changed, rendered UI changed). **This no-Deep-Think default doesn't survive a
+  mid-task escalation**: if a fix round's builder spawn escalates to the most capable
+  tier under `## Model routing`'s complex/hard signals (e.g. a second failed round
+  repeating the first attempt's blind spot), the mandatory Deep-Think-review rule fires
+  for that spawn exactly as it would on any other tier — it is never waived just because
+  the task started as T0.5.
 - **T1 → Standard.** Run the state machine `RESEARCH → PLAN → BUILD → REVIEW → VERIFY →
   DONE`. Spawn a researcher only when the context is non-obvious. `builder` builds — or
   `tdd-builder` instead whenever the plan calls for TDD, or the task is a bug fix (its
@@ -177,6 +204,15 @@ Where this shows up in practice:
 - **Verifier stays sequential after its builder.** A verifier's job is to check the
   builder's actual output, so it can only start once that specific builder's spawn has
   returned — never parallelize a verifier with the build it's verifying.
+- **REVIEW and VERIFY over the same finished diff, on T1/T2.** Once BUILD returns,
+  `reviewer` (plus `security-reviewer`/`designer` in REVIEW mode where triggered) and
+  `verifier` can run in the same parallel batch — both read the identical
+  already-finished diff, and neither's outcome changes what the other checks. Sequence
+  them instead, **verifier first**, only when the reviewer would otherwise have to
+  reproduce the verifier's run-it-yourself output (test/build logs) itself — run the
+  verifier, then forward its evidence to the reviewer instead of having the reviewer
+  re-run the same commands. **T0.5 keeps VERIFY before REVIEW deliberately** (see Step 3) so a failing
+  acceptance criterion doesn't burn a review pass on a diff that's about to change again.
 
 Integrate results only after a parallel batch fully returns — read every report before
 deciding the next step, the same as a single spawn. A parallel batch does not relax any
@@ -199,7 +235,9 @@ self-contained state-understanding/surface-forks/stop-and-wait sequence otherwis
 
 ## PLAN output shape
 
-On every T1/T2 task (T0 skips this — no ceremony on a typo fix), first size the work: if
+On every T1/T2 task (T0 skips this entirely — no ceremony on a typo fix; T0.5 uses the
+lighter, no-wait plan shape spelled out in its own Step 3 bullet instead of this one),
+first size the work: if
 you can't state a **Destination** in one or two lines without hedging, or drafting Step 3
 below turns up more than two or three genuine *forks*, or a fork's own resolution needs
 investigation spanning more than this session — stop and go to `## When PLAN doesn't fit
@@ -286,6 +324,7 @@ Complex/hard triggers on any of:
 | Tier | Floor |
 |---|---|
 | T0 | The cheapest/fastest tier (Flash-Lite class) |
+| T0.5 | The balanced tier (Flash class) |
 | T1 | The balanced tier (Flash class) |
 | T2 | **The most capable tier (Pro class)** — and every T2 spawn is complex/hard by definition for the Deep-Think-review rule below, regardless of whether the difficulty signals above also fire |
 
@@ -382,6 +421,11 @@ task to the right subagent by its description) — if another extension defines 
 same-named agent with a weaker contract, prefer explicit `@` delegation to be unambiguous
 about which one you mean.
 
+Compute the `Baseline:` SHA and scoped-path diff **once per round**: right after PLAN is
+confirmed (or the T0.5 plan is drafted) for round 1, and again immediately after each
+BUILD that produces a new diff, for the next round. Reuse that single value verbatim
+across every spawn within the same round — don't re-derive it per spawn.
+
 Use this template for every builder/tdd-builder/reviewer/verifier/security-reviewer/designer spawn
 (designer's REVIEW mode uses it exactly like the reviewer; DESIGN mode reuses the same
 fields, with `Acceptance criteria:` describing what the resulting spec must satisfy
@@ -389,7 +433,7 @@ rather than what to verify, and no `Verify with:` line):
 
 ```
 Task: <one sentence>
-Tier: T0|T1|T2
+Tier: T0|T0.5|T1|T2
 Model: <the intended model tier — the most capable tier (Pro class) on T2, per `##
   Model routing` otherwise — applied via the per-delegation override if your Gemini CLI's
   spawn mechanism supports one, or stated here as a flag for the human/log if not: the
@@ -602,3 +646,27 @@ verification that confirms recovery):
 Report completion plainly with the evidence. On T1/T2, close with a compact
 **traceability summary** — one line per requirement: requirement → task(s) → reviewer
 verdict → verifier verdict → evidence.
+
+## Suggested next steps
+
+After reporting DONE, at every tier including T0/T0.5 — this is the orchestrator's own
+observation, not a new spawn, so it costs nothing extra to include — add zero to three
+suggested next steps grounded in something this specific task actually surfaced, not a
+generic wishlist. In scope: work explicitly cut to `Out of scope:` during PLAN, a risk
+or gap a researcher/reviewer/verifier/security-reviewer noticed that didn't block this
+task's own acceptance criteria, or a closely adjacent improvement the diff makes newly
+obvious. Each item states *why* in one line and, where it's a real follow-on task, which
+tier it would likely start at.
+
+Never spawn a subagent, edit a file, draft a plan, or add a `docs/decisions.md` entry
+for a suggestion — acting on one is a new task with its own Step 1/2 classification and
+its own human go-ahead, same as any other request. Never suggest speculative
+abstractions, unrelated features, generic cleanup, or a restatement of what this task
+already did. If something surfaced is release-blocking **and inside this task's own
+acceptance criteria**, the task isn't DONE — fix it within this BUILD round instead of
+listing it as a suggestion. If it's release-blocking but **outside this task's scope**
+(cut via `Out of scope:` during PLAN, or a gap discovered elsewhere), don't silently
+expand scope to fix it and don't downgrade it into an optional-sounding suggestion
+either — stop and put it to the human per `## Asking the human` before deciding whether
+to ship past it or open a new task for it. When nothing worth raising surfaced, write
+`Suggested next steps: none.` — silence isn't the same as skipping the section.

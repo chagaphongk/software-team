@@ -29,7 +29,9 @@ replacement — both stay published. Reach for `software-team` specifically when
   the always-delegate invariant is the point.
 - **A dedicated reviewer.** agent-office folds review into VERIFY. `software-team` runs a
   separate `reviewer` subagent against a 5-category checklist (correctness, security,
-  performance, impact, plan conformance) before the verifier executes anything.
+  performance, impact, plan conformance) — on T1/T2 it can run in parallel with the
+  verifier over the same finished diff; T0.5 runs it after VERIFY, scoped down to
+  correctness/regression/scope only.
 - **Hooks installed by default.** Destructive-command blocking, secret-file blocking, and
   subagent-spawn logging ship as first-class plugin hooks (`hooks/hooks.json`), not an
   opt-in `examples/` folder you wire up yourself.
@@ -58,12 +60,17 @@ inline, no reviewer round trip.
   Next.js → `nextjs-developer`, plain React → `react-expert`), with an example mapping
   table as a starting point and a verify-against-installed-list rule so a stale example
   never gets loaded blind.
-- **Risk-tier routing (T0/T1/T2)** — T0 still spawns a builder (Haiku, orchestrator
-  verifies by diff); T1 always gets an independent verifier; T2 requires human plan
+- **Risk-tier routing (T0/T0.5/T1/T2)** — T0 still spawns a builder (Haiku, orchestrator
+  verifies by diff); T0.5 is a fast lane for a small, scoped, low-judgment change: a
+  no-wait PLAN, then `BUILD → VERIFY → REVIEW` with a lighter reviewer pass and no
+  researcher/Fable; T1 always gets an independent verifier; T2 requires human plan
   approval, opus-tier subagents (except a fully-specified, no-judgment-left build, which
   may run its builder at the T1 floor), a mandatory reviewer, security-reviewer only when
   the work touches auth/payments/PII/secrets/a public API, and a mandatory Fable review of
-  the finished diff.
+  the finished diff. On T1/T2, REVIEW and VERIFY can run in the same parallel batch once
+  BUILD returns, since both just read the finished diff. Every DONE report also closes
+  with zero to three evidence-grounded suggested next steps — never acted on without a
+  new request.
 - **Read-only deliverables skip the plan gate** — a code review or audit spawns
   `software-team:reviewer` directly, `software-team:security-reviewer` for a
   security-focused audit, or both in parallel when the ask covers correctness and
@@ -121,7 +128,7 @@ inline, no reviewer round trip.
 
 ## Install
 
-Requires `python3` on `PATH` (the hooks use it). Current version: `0.1.10`.
+Requires `python3` on `PATH` (the hooks use it). Current version: `0.1.11`.
 
 1. Register the marketplace, once per machine:
 
