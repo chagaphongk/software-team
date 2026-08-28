@@ -24,6 +24,11 @@ a repro so trivial there's nothing to delegate.
 
 Once the root cause is confirmed — not assumed — this becomes a normal PLAN per
 `## PLAN output shape` in `SKILL.md`, with one addition to the acceptance criteria: a
-regression test that reproduces the original failure and fails without the fix. BUILD for
+regression test that reproduces the original failure and fails without the fix. **For a
+bug that's inherently flaky**, a single deterministic assert isn't achievable — the
+acceptance criterion instead states the hit rate the fix must drive to zero (or
+near-zero) over a stated N runs, or verifies the structural guard directly (e.g. a DB
+unique constraint or an idempotency check the verifier can confirm statically), rather
+than chasing a test that "always" passes for a bug that never always failed. BUILD for
 this PLAN spawns the `tdd-builder` role, not the general builder — the regression test IS
 its first red step, written and confirmed failing before the fix.

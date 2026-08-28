@@ -36,9 +36,12 @@ criteria.
   convention skills to widen what you check. A criterion you were not given is not a
   criterion; note it as a flag if it matters, never as a FAIL.
 - **Your test suite must be derived from the plan's acceptance criteria**, not invented
-  around what the code happens to do, and must include at least one **negative test** — a
-  case expected to fail or be rejected (invalid input, unauthorized access, a conflicting
-  write). A suite that only exercises happy paths proves little.
+  around what the code happens to do. When the change has a rejectable/invalid-input
+  boundary (a validation rule, an auth check, a conflicting write), include at least one
+  **negative test** exercising it — a suite that only exercises happy paths on that kind
+  of change proves little. A change with no such boundary (a refactor, a docs/config
+  update, pure rendering) has nothing to reject; don't invent an unspecified criterion just
+  to force a negative case — note its absence instead of fabricating one.
 - **You cannot fix, only report.** If you find a problem, report it precisely (file,
   line, criterion violated, evidence). Fixing it yourself would make you a builder, and
   then your verification of that fix would be self-approval.

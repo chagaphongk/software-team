@@ -60,17 +60,20 @@ inline, no reviewer round trip.
   never gets loaded blind.
 - **Risk-tier routing (T0/T1/T2)** — T0 still spawns a builder (Haiku, orchestrator
   verifies by diff); T1 always gets an independent verifier; T2 requires human plan
-  approval, opus-tier subagents, a mandatory reviewer plus security-reviewer, and a
-  mandatory Fable review of the finished diff.
+  approval, opus-tier subagents (except a fully-specified, no-judgment-left build, which
+  may run its builder at the T1 floor), a mandatory reviewer, security-reviewer only when
+  the work touches auth/payments/PII/secrets/a public API, and a mandatory Fable review of
+  the finished diff.
 - **Read-only deliverables skip the plan gate** — a code review or audit spawns
   `software-team:reviewer` directly, `software-team:security-reviewer` for a
   security-focused audit, or both in parallel when the ask covers correctness and
   security together; its findings are the deliverable.
 - **Full-office roster, not just build/verify** — `security-reviewer` runs a dedicated
   OWASP-class pass before DONE on T2 security-sensitive work; `documenter` updates
-  README/CHANGELOG/docstrings after a `PASS`, tracing every line to the diff; `deployer`
-  is the only agent allowed to run a deploy/publish/push, and only with the human's
-  quoted approval in its prompt — the orchestrator itself never runs one; `designer`
+  README/CHANGELOG/docstrings as part of BUILD, before REVIEW/VERIFY (or directly on T0),
+  tracing every line to the diff; `deployer` is the only agent allowed to run a
+  deploy/publish/push/delete, and only
+  with the human's quoted approval in its prompt — the orchestrator itself never runs one; `designer`
   produces a UI/UX spec before BUILD for a new screen (DESIGN mode) and audits any diff
   that changes rendered output for hierarchy/accessibility/consistency before DONE
   (REVIEW mode) — a distinct lens from the standard reviewer's correctness/security/
@@ -83,18 +86,27 @@ inline, no reviewer round trip.
   anything complex (many interacting files, concurrency, a real judgment call, a failed
   round) gets Opus plus a mandatory one-shot Fable review of the finished diff before
   DONE. The risk tier from Step 2 still sets a floor the difficulty pick can't undercut —
-  T2 is always at least Opus.
+  T2 is always at least Opus, except the builder on a fully-specified, low-judgment T2
+  build, which may run at the T1 Sonnet floor while everything else stays at Opus.
 - **A dedicated TDD builder** — `software-team:tdd-builder` spawns instead of the general
   builder whenever the plan calls for TDD or the task is a bug fix, and implements
   strictly through red (a test confirmed to fail for the right reason) → green (the
   minimum code to pass it) → refactor (tests kept green throughout), reporting the actual
   red/green trail per criterion as evidence, not just the final passing state.
-- **Deterministic guard hooks** — `hooks/guard_bash.py` blocks force-push, `git reset
-  --hard`, `git clean -f`, and destructive shell reads of secrets; `hooks/guard_secrets.py`
-  blocks Read/Edit/Write of `.env*`, key files, and `credentials.*`; `hooks/log_agent.py`
-  writes every subagent start/stop to `.claude/state/agent-log.jsonl`; `hooks/pre_compact.py`
-  marks context-compaction events so `/software-team:workflow` knows to re-read
-  `docs/decisions.md` instead of trusting compacted memory.
+- **Deterministic guard hooks** — `hooks/guard_bash.py` parses the shell command into
+  real tokens (not a substring regex) to block force-push (including abbreviated and
+  refspec forms), `git reset --hard`, `git clean -f`, `rm -rf` on `/`/`~`/`$HOME`/a drive
+  root, and destructive shell reads of secrets, while staying quote- and
+  comment-aware so it doesn't trip on a quoted `;` in a commit message or a `#`
+  comment. It does not implement full bash lexing — compound commands, shell
+  functions, here-docs, `eval`, and aliases can still reach a blocked command
+  through a spelling it doesn't recognize; the actual hard boundary for an outward
+  push/deploy is the human-approval + deployer gate (hard rule #2), not this hook.
+  `hooks/guard_secrets.py` blocks Read/Edit/Write of `.env*`, key files, and
+  `credentials.*`; `hooks/log_agent.py` writes every subagent start/stop to
+  `.claude/state/agent-log.jsonl`; `hooks/pre_compact.py` marks context-compaction
+  events so `/software-team:workflow` knows to re-read `docs/decisions.md` instead
+  of trusting compacted memory.
 - **Known limit: reviewers keep Bash.** `reviewer`, `security-reviewer`, and `verifier`
   subagents have no Write/Edit tool, but they keep Bash access — needed for `git diff` and
   running tests. Their read-only status is instruction-enforced, not sandboxed; nothing
@@ -109,7 +121,7 @@ inline, no reviewer round trip.
 
 ## Install
 
-Requires `python3` on `PATH` (the hooks use it). Current version: `0.1.3`.
+Requires `python3` on `PATH` (the hooks use it). Current version: `0.1.9`.
 
 1. Register the marketplace, once per machine:
 
@@ -197,8 +209,8 @@ launches non-interactively and shows a "trust this folder" prompt anyway, set
   resolve the current model string for each tier yourself when spawning.
 - The two guard hooks (`guard_bash.py`, `guard_secrets.py`) and the agent-log hook
   (`log_agent.py`) parse the incoming hook JSON defensively (several plausible field-name
-  variants), because the exact payload shape Gemini CLI's `BeforeTool`/`BeforeAgent`/
-  `AfterAgent` events send was not confirmed by a live session during this port — this
+  variants), because the exact payload shape Gemini CLI's `BeforeTool`/`AfterTool` events
+  send was not confirmed by a live session during this port — this
   machine's Gemini CLI account could not authenticate at the time. The hook *event names*
   and the extension's overall structure (`agents/`, `skills/`, `commands/`, `hooks/`) are
   confirmed against Gemini CLI's own docs and its `extensions validate` / `extensions
@@ -247,9 +259,10 @@ session's skill list with the matching description).
   schema) — there is no `/software-team:workflow` or `/software-team:decision` slash
   command on this port; read `docs/decisions.md` and `.software-team/state/agent-log.jsonl`
   directly instead.
-- No per-spawn model-tier selection confirmed on `collaboration.spawn_agent` — every
-  sub-agent runs on whatever model the top-level session uses; the port flags where the
-  Claude version would escalate model tier instead of silently dropping the signal.
+- Per-spawn `model`/`reasoning_effort` selection is available (confirmed by live
+  introspection of the spawn tool's schema — it's the tool name and field set that drift:
+  named `collaboration.spawn_agent` when this port was written, `multi_agent_v1__spawn_agent`
+  as of this update; introspect your own tool set rather than trusting either string).
 - **Hooks did not confirm firing**, even though `.codex-plugin/plugin.json` declares
   `"hooks": "./hooks/hooks.json"` and real `codex plugin add` ingestion accepts that field
   (the local `plugin-creator` skill's scaffold validator rejects it — a stricter/staler

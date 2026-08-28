@@ -18,10 +18,9 @@
             "command": "python3 \"${extensionPath}/hooks/guard_secrets.py\""
           }
         ]
-      }
-    ],
-    "BeforeAgent": [
+      },
       {
+        "matcher": "builder|tdd-builder|reviewer|security-reviewer|verifier|researcher|documenter|deployer|designer",
         "hooks": [
           {
             "type": "command",
@@ -30,8 +29,9 @@
         ]
       }
     ],
-    "AfterAgent": [
+    "AfterTool": [
       {
+        "matcher": "builder|tdd-builder|reviewer|security-reviewer|verifier|researcher|documenter|deployer|designer",
         "hooks": [
           {
             "type": "command",

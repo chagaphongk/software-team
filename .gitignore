@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+
+# Runtime state written by hooks/log_agent.py and the scheduler at runtime, not source
+.claude/state/
+.claude/scheduled_tasks.lock
+**/.software-team/

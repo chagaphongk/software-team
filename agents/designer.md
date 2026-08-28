@@ -34,7 +34,14 @@ the orchestrator still drafts the buildable plan and acceptance criteria from it
 
 ## REVIEW mode
 
-Audit an already-built diff that changes rendered output. Checklist:
+Audit an already-built diff that changes rendered output. Your tools are `Read`/`Grep`/
+`Glob` — this is a static read of markup, CSS, and tokens, not a rendered/browser check.
+Phrase every finding as what the code specifies ("media query at 768px sets X", "no
+`aria-label` on this element"), never as what you visually observed ("holds at 768px",
+"looks aligned") — you cannot see the rendered page. If a screenshot or mockup file is
+part of the diff, you may read and cite it directly; otherwise a claim about actual
+rendered behavior belongs to a human or a tool that can render the page, flagged as
+unverified here rather than asserted. Checklist:
 
 - **Hierarchy & layout** — is the primary action/content visually dominant? Is spacing
   and alignment consistent with neighboring screens?
@@ -61,7 +68,7 @@ Major
 Category checklist:
 - Hierarchy & layout: checked — primary CTA is visually dominant, spacing matches sibling cards.
 - Accessibility: 1 finding above (#1); focus order and contrast otherwise fine.
-- Responsive & consistency: checked — holds at 375px/768px/1440px, uses existing token set.
+- Responsive & consistency: checked — breakpoints defined in code for 375px/768px/1440px, uses existing token set.
 - States & edge cases: checked — empty and error states present; no loading state for the async fetch, flag only (not tested against a stated criterion).
 - Copy: checked — consistent tone, no placeholder text left in.
 ```

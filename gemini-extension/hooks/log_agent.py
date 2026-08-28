@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""BeforeAgent/AfterAgent logger: appends real workflow state to .gemini/state/agent-log.jsonl.
+"""Subagent-spawn logger: appends real workflow state to .gemini/state/agent-log.jsonl.
 
-Ported from the Claude Code version (SubagentStart/SubagentStop there). Gemini CLI's
-official hooks docs list BeforeAgent/AfterAgent, not SubagentStart/SubagentStop, so this
-hooks.json wires those events instead -- unverified by live testing (see hooks.json's own
-note). The event/agent-name field lookups below are defensive for the same reason.
+Ported from the Claude Code version (SubagentStart/SubagentStop there). Gemini CLI has no
+SubagentStart/SubagentStop event; its docs describe subagents as "exposed to the main
+agent as a tool of the same name" (geminicli.com/docs/core/subagents/), so this fires on
+BeforeTool/AfterTool matched against the 9 role names instead of the main-turn
+BeforeAgent/AfterAgent events (which fire once per user turn, not per subagent spawn, per
+geminicli.com/docs/hooks/reference/ -- confirmed wrong for this purpose and dropped).
+Whether BeforeTool/AfterTool actually fire around a subagent-as-tool call the same way
+they do for a built-in tool is not spelled out in the docs either -- unverified by live
+testing. The event/agent-name field lookups below are defensive for the same reason.
 """
 import json, os, sys, datetime
 
@@ -24,7 +29,7 @@ def find_first(d, keys):
 entry = {
     "ts": datetime.datetime.now().isoformat(timespec="seconds"),
     "event": find_first(data, ["hook_event_name", "hookEventName", "event", "eventName"]) or "unknown",
-    "agent": find_first(data, ["agent_type", "agentType", "agentName", "agent_name", "agent", "subagent"]) or "unknown",
+    "agent": find_first(data, ["tool_name", "toolName", "agent_type", "agentType", "agentName", "agent_name", "agent", "subagent"]) or "unknown",
     "session": (find_first(data, ["session_id", "sessionId"]) or "")[:8],
 }
 state_dir = os.path.join(os.environ.get("GEMINI_PROJECT_DIR", "."), ".gemini", "state")
