@@ -55,7 +55,7 @@ path = find_path(data)
 paths = ([path] if path else []) + find_patch_paths(data)
 
 ALLOW = re.compile(r"\.env\.(example|sample|template)$", re.IGNORECASE)
-DENY = re.compile(r"(\.env(\..+)?$|(^|/)\.envrc$|(^|/)id_rsa[^/]*$|(^|/)id_ed25519[^/]*$|\.pem$|\.key$|(^|/)(credentials?|secrets?)\.(json|ya?ml|toml)$)", re.IGNORECASE)
+DENY = re.compile(r"(\.env(\..+)?$|(^|/)\.envrc$|(^|/)id_(rsa|dsa|ecdsa|ed25519)[^/]*$|\.pem$|\.key$|(^|/)(credentials?|secrets?)\.(json|ya?ml|toml)$)", re.IGNORECASE)
 
 for p in paths:
     normalized = p.replace("\\", "/")

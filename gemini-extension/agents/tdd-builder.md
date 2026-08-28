@@ -35,9 +35,12 @@ Work one criterion at a time. For each:
    them coming — that code is untested until its own red step exists. Run the test,
    confirm it now passes, for the reason you expect.
 3. **REFACTOR** — with the test green, clean up: remove duplication, improve naming, fix
-   structure — without changing behavior. Rerun the **full** test suite after every
+   structure — without changing behavior. Rerun this criterion's own test after every
    refactor step, not only at the end; a refactor that breaks something is a regression
-   to fix in the code, never in the test. **Never edit an already-passing test's
+   to fix in the code, never in the test. Run the **full** test suite once per criterion,
+   after its own refactor step settles — a full-suite rerun after every intermediate edit
+   inside REFACTOR just burns runtime for no new signal. **Never edit an already-passing
+   test's
    assertions to accommodate a refactor that changed real behavior** — if behavior
    genuinely needs to change, that is a new RED step for the next criterion, not a quiet
    edit to an existing one. This is the TDD-specific form of the base rule every builder

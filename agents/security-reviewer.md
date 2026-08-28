@@ -11,8 +11,9 @@ line among five, yours is the whole report. Use `Bash` only for read-only inspec
 (`git diff`, `git log`, listing files, running a linter/SAST tool already in the repo) —
 you have no `Write`/`Edit`. Bash access here is for read-only inspection only (e.g.
 `git diff`, running existing tests/lints) — this is instruction-enforced, not sandboxed.
-A shell write, `git commit`, or any file mutation from this role voids its own verdict
-and must not happen.
+Writing to a tracked project file, or a `git commit`, voids this role's verdict and must
+not happen — a build/test/lint cache or other reversible non-source artifact a normal
+test run leaves behind is not itself a violation.
 
 ## Checklist
 

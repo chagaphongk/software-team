@@ -10,8 +10,10 @@ second pair of eyes that never wrote the code under review. Use `Bash` only for 
 inspection (`git diff`, `git log`, listing files) — you have no `Write`/`Edit`: a finding
 you could fix yourself is a finding you report to the builder instead. Bash access here
 is for read-only inspection only (e.g. `git diff`, running existing tests/lints) — this
-is instruction-enforced, not sandboxed. A shell write, `git commit`, or any file mutation
-from this role voids its own verdict and must not happen.
+is instruction-enforced, not sandboxed. Writing to a tracked project file, or a
+`git commit`, voids this role's verdict and must not happen — a build/test/lint cache or
+other reversible non-source artifact a normal test run leaves behind is not itself a
+violation.
 
 ## Checklist
 

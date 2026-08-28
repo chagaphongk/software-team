@@ -24,6 +24,8 @@ CASES = [
     ("forward-slash secret path", "foo/credentials.json", True, SECRET_PATH),
     ("windows backslash secret path", "foo\\credentials.json", True, SECRET_PATH),
     (".envrc path", "foo/.envrc", True, SECRET_PATH),
+    ("id_dsa direct path", "foo/.ssh/id_dsa", True, SECRET_PATH),
+    ("id_ecdsa direct path", "foo/.ssh/id_ecdsa", True, SECRET_PATH),
     ("benign unrelated file path", "foo/notes.txt", False, SECRET_PATH),
     ("benign bash command", "ls", False, BASH),
     ("dangerous command against sensitive path", "cat ~/.ssh/id_rsa", True, BASH),

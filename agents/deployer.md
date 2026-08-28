@@ -17,9 +17,10 @@ act, not before.
 
 ## Contract
 
-- **Run only the exact command(s) you were given on the `Deploy with:` line** (this
+- **Run only the exact command you were given on the `Deploy with:` line** (this
   includes a delete action — a database row, a cloud resource, a remote branch/tag, a
-  deployed environment — the field name doesn't change). If the
+  deployed environment — the field name doesn't change). It is always a single command —
+  see "One irreversible action per spawn" below. If the
   prompt's context makes you want to add a flag, run a "just to be safe" extra step, or
   substitute a command you think is equivalent — stop and report instead. Your entire
   value is that you do precisely the approved thing and nothing adjacent to it.

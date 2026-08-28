@@ -3,7 +3,7 @@
 import json, re, sys
 
 ALLOW = re.compile(r"\.env\.(example|sample|template)$", re.IGNORECASE)
-DENY = re.compile(r"(\.env(\..+)?$|(^|/)\.envrc$|(^|/)id_rsa[^/]*$|(^|/)id_ed25519[^/]*$|\.pem$|\.key$|(^|/)(credentials?|secrets?)\.(json|ya?ml|toml)$)", re.IGNORECASE)
+DENY = re.compile(r"(\.env(\..+)?$|(^|/)\.envrc$|(^|/)id_(rsa|dsa|ecdsa|ed25519)[^/]*$|\.pem$|\.key$|(^|/)(credentials?|secrets?)\.(json|ya?ml|toml)$)", re.IGNORECASE)
 
 
 def is_secret_path(path):

@@ -28,7 +28,7 @@ def find_path(d):
 path = find_path(data).replace("\\", "/")
 
 ALLOW = re.compile(r"\.env\.(example|sample|template)$", re.IGNORECASE)
-DENY = re.compile(r"(\.env(\..+)?$|(^|/)\.envrc$|(^|/)id_rsa[^/]*$|(^|/)id_ed25519[^/]*$|\.pem$|\.key$|(^|/)(credentials?|secrets?)\.(json|ya?ml|toml)$)", re.IGNORECASE)
+DENY = re.compile(r"(\.env(\..+)?$|(^|/)\.envrc$|(^|/)id_(rsa|dsa|ecdsa|ed25519)[^/]*$|\.pem$|\.key$|(^|/)(credentials?|secrets?)\.(json|ya?ml|toml)$)", re.IGNORECASE)
 
 if path and DENY.search(path) and not ALLOW.search(path):
     print(f"BLOCKED by policy hook: '{path}' looks like a secret file. Ask the user to handle it.", file=sys.stderr)

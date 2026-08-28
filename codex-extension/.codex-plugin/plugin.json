@@ -1,6 +1,6 @@
 {
   "name": "software-team",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Disciplined engineering-office workflow: risk-tier routing, RESEARCH -> PLAN -> BUILD -> REVIEW -> VERIFY, evidence-backed claims, human approval gates, and deterministic guard hooks -- adapted for Codex's native collaboration.spawn_agent instead of named subagent personas.",
   "author": {
     "name": "chagaphong"
