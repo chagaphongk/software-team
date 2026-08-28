@@ -202,6 +202,23 @@ review the extension first if you're installing from someone else's clone. If it
 launches non-interactively and shows a "trust this folder" prompt anyway, set
 `GEMINI_CLI_TRUST_WORKSPACE=true` for that command.)
 
+**Update**
+
+```
+gemini extensions update software-team
+```
+
+(or `gemini extensions update --all` to refresh every installed extension.) A `local`
+install (the default from the command above) is a **snapshot copy** taken at install
+time, not a live link — editing files under `gemini-extension/` does nothing to the
+installed copy until you re-run `update`. Confirm the version bumped with
+`gemini extensions list`. If you're actively developing this repo rather than just
+consuming it, `gemini extensions link /path/to/software-team/gemini-extension` instead of
+`install` keeps the installed copy always in sync with the source tree, no `update` step
+needed — trade-off: a link can't be pinned to an older version the way a snapshot can.
+The `update` command may prompt for the same trust confirmation as a fresh install; pipe
+`y` (`echo y | gemini extensions update software-team`) if running it non-interactively.
+
 **Known gaps in this port, disclosed rather than glossed over:**
 - Model tiers are described generically (cheapest/fastest, balanced, most capable,
   extended-reasoning) rather than pinned to a specific Gemini model string, since
@@ -253,6 +270,32 @@ A sandboxed, read-only, ephemeral `codex exec` probe against a fresh session aft
 confirmed the skill actually loads (`software-team:software-team` appeared in the
 session's skill list with the matching description).
 
+**Update**
+
+```
+codex plugin marketplace upgrade software-team-codex-marketplace
+codex plugin add software-team@software-team-codex-marketplace
+```
+
+`marketplace upgrade` only re-fetches a **Git**-sourced marketplace; a local-path
+marketplace (the install command above) already reads the current files on disk, so that
+step is a no-op for it — the `plugin add` line is what actually refreshes the
+**installed** copy (`~/.codex/plugins/cache/...`), which is its own snapshot and won't
+pick up source changes until you re-run `add`. Confirm the version bumped with
+`codex plugin list`.
+
+**If you moved or renamed the local clone** (this repo itself was renamed from
+`ai-software-team` to `software-team` during development), the registered marketplace
+still points at the old path and both `codex plugin list` and `codex plugin add` fail
+with `marketplace root does not contain a supported manifest`. Fix by re-registering the
+marketplace at its new path, then reinstalling the plugin from it:
+
+```
+codex plugin marketplace remove software-team-codex-marketplace
+codex plugin marketplace add /path/to/software-team/codex-extension
+codex plugin add software-team@software-team-codex-marketplace
+```
+
 **Known gaps in this port, disclosed rather than glossed over** (full detail in
 `codex-extension/hooks/PORT_NOTES.md`):
 - No `commands/` support on Codex (confirmed — not in the official plugin manifest
@@ -279,6 +322,39 @@ session's skill list with the matching description).
   `hook_event_name`, `agent_type`, `session_id`) are parsed defensively across several
   plausible key names, same approach as the Gemini CLI port, since Codex's exact shape
   wasn't confirmed live.
+
+## agy CLI
+
+`agy` is a separate, third-party multi-model CLI (not maintained by this project) that
+can import an already-installed Gemini CLI extension or Claude Code plugin into its own
+config as an agent skill. This isn't a fourth port — there's no
+`agy-extension/` directory here — just usage notes for people who already run one of the
+two supported installs above and also use agy.
+
+```
+agy plugin import gemini --force
+```
+
+`agy plugin import` **copies** the plugin at the moment you run it — it is not a live
+link, and by default it **skips a name it already imported**, so `--force` is required to
+pick up a version bump (confirmed: without `--force` it printed `already imported, use
+--force to re-import` and left the stale copy in place). Run `gemini extensions update
+software-team` (see above) first if the Gemini CLI extension itself is stale, since agy
+copies whatever is currently installed there, not the git repo directly. Confirm with:
+
+```
+agy plugin list
+```
+
+and check the `importedAt` timestamp for `software-team` advanced.
+
+**Known gap, disclosed rather than glossed over:** `agy plugin import claude` (or the
+bare `agy plugin import`, which tries both sources) reported `No claude extensions
+found` in testing, even though the Claude Code plugin was confirmed installed and
+current (`~/.claude/plugins/installed_plugins.json` showed the right version). Only the
+`gemini` source reliably picked up this plugin. If you rely on agy, keep the Gemini CLI
+extension installed (even alongside Claude Code) as the path agy actually reads from —
+treat `agy plugin import claude` as best-effort, not a substitute for that.
 
 ## Related
 
