@@ -1,7 +1,7 @@
 {
   "name": "software-team",
   "description": "Disciplined engineering-office workflow with mandatory subagent delegation: risk-tier routing, RESEARCH → PLAN → BUILD → REVIEW → VERIFY, a dedicated reviewer role alongside the builder/verifier split, evidence-backed claims, human approval gates, and deterministic guard hooks.",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "author": {
     "name": "chagaphong"
   },
