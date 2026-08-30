@@ -9,7 +9,11 @@ path field is present.
 """
 import json, re, sys
 
-data = json.load(sys.stdin)
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    print("BLOCKED by policy hook: malformed hook input, failing closed.", file=sys.stderr)
+    sys.exit(2)
 
 
 def find_path(d):

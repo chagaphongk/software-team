@@ -12,7 +12,11 @@ def is_secret_path(path):
 
 
 if __name__ == "__main__":
-    data = json.load(sys.stdin)
+    try:
+        data = json.load(sys.stdin)
+    except Exception:
+        print("BLOCKED by policy hook: malformed hook input, failing closed.", file=sys.stderr)
+        sys.exit(2)
     path = (data.get("tool_input") or {}).get("file_path", "") or ""
     if is_secret_path(path):
         print(f"BLOCKED by policy hook: '{path}' looks like a secret file. Ask the user to handle it.", file=sys.stderr)
