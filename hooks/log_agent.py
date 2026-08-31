@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""SubagentStart/SubagentStop logger: appends real workflow state to .claude/state/agent-log.jsonl.
+"""SubagentStart logger: appends real workflow state to .claude/state/agent-log.jsonl.
 Records that a subagent spawn occurred; does not prove the orchestrator made no direct
-edits (hook payloads carry no caller identity)."""
+edits (hook payloads carry no caller identity). SubagentStop is not hooked — its
+payload carries no agent identity, so stop entries added only noise."""
 import json, os, sys, datetime
 
 data = json.load(sys.stdin)

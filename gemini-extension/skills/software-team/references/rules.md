@@ -49,7 +49,8 @@ that distinguishes a real result from a plausible-sounding one.
 ## Article 4 — Gated delivery
 
 Work advances stage by stage. A stage is complete only when its own completion gate
-passes: checks green, diff scoped to the stage, documentation usable by a newcomer, and
+passes: checks green, diff scoped to the stage, any documentation the stage required
+usable by a newcomer, and
 evidence recorded. A failing gate stops the work — it is never downgraded, waived, or
 worked around without a human decision.
 

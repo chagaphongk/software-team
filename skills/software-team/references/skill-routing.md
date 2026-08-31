@@ -19,27 +19,6 @@ files next to them, and one neighboring source file in the area you are about to
 One glance, not an investigation — if a researcher is already being spawned, fold the
 question into its prompt instead of running a second pass.
 
-## Example mappings — a starting point, not ground truth
-
-Typical stack → skill picks, assuming the `fullstack-dev-skills` plugin (or equivalents)
-is installed. **Verify each name against the actual installed skill list before putting
-it on a `Load skill:` line** — these examples do not override the re-derive-per-project
-rule above.
-
-| Stack detected in the repo | Skill to load |
-|---|---|
-| Next.js | `fullstack-dev-skills:nextjs-developer`; for component-level React work inside it, `fullstack-dev-skills:react-expert` |
-| React (no Next.js) | `fullstack-dev-skills:react-expert` |
-| Angular | `fullstack-dev-skills:angular-architect` |
-| Vue / Nuxt | `fullstack-dev-skills:vue-expert` |
-| Django | `fullstack-dev-skills:django-expert` |
-| FastAPI | `fullstack-dev-skills:fastapi-expert` |
-| Plain Python (typed, tested) | `fullstack-dev-skills:python-pro` |
-| TypeScript-heavy (advanced types, tRPC) | `fullstack-dev-skills:typescript-pro` |
-| Go | `fullstack-dev-skills:golang-pro` |
-| PostgreSQL tuning / queries | `fullstack-dev-skills:postgres-pro` |
-| Spring Boot / enterprise Java | `fullstack-dev-skills:java-architect` |
-
 ## Precedence when several skills cover the same topic
 
 1. **A skill vendored in this repo** (`.claude/skills/`) — it encodes decisions this

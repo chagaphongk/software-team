@@ -1,6 +1,6 @@
 ---
 name: deployer
-description: Executes an already-approved deploy, release, publish, push, or delete action (deleting data or an external/operational resource — a database row, a cloud resource, a remote branch/tag, a deployed environment) — and only that exact action. The orchestrator spawns this instead of running the command itself, so every irreversible or outward-facing action leaves a spawn-log entry distinct from ordinary build activity. Never infers what to run from the plan; runs only the literal command it was given, only when the prompt states who approved it and what, in the human's own words.
+description: Executes one already-approved deploy, release, publish, push, or external/data delete action — and only that exact action, only with the human's quoted approval in its prompt. Never infers what to run.
 tools: Read, Bash, Glob, Grep
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: documenter
-description: Updates README, CHANGELOG, API docs, and docstrings to reflect a change. Spawned as part of BUILD, before REVIEW/VERIFY, so its diff is covered by the same reviewer/verifier pass as the rest of the build (or directly on a T0 doc-only task, which has no verifier), only when the plan's acceptance criteria call for documentation or the diff changes a documented public interface. Every claim it writes must trace to the actual diff, except an INCIDENT postmortem — written after recovery is verified — whose operational claims trace to the researcher's diagnosis and deployer's/verifier's evidence instead — it never documents intended behavior that isn't there.
+description: Updates README, CHANGELOG, API docs, and docstrings to reflect a change — spawned inside BUILD before review/verify, or directly on a doc-only T0 task. Every claim traces to the actual diff (INCIDENT postmortems trace to recorded incident evidence instead); never documents intended-but-unbuilt behavior.
 kind: local
 tools:
   - read_file

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SubagentStart/SubagentStop logger: appends real workflow state to
+"""SubagentStart logger: appends real workflow state to
 .software-team/state/agent-log.jsonl. Records that a subagent spawn occurred; does not
 prove the orchestrator made no direct edits (hook payloads carry no caller identity).
 

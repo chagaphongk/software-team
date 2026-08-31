@@ -30,5 +30,5 @@ acceptance criterion instead states the hit rate the fix must drive to zero (or
 near-zero) over a stated N runs, or verifies the structural guard directly (e.g. a DB
 unique constraint or an idempotency check the verifier can confirm statically), rather
 than chasing a test that "always" passes for a bug that never always failed. BUILD for
-this PLAN spawns the `tdd-builder` role, not the general builder — the regression test IS
+this PLAN spawns the `builder` role with `Mode: TDD` — the regression test IS
 its first red step, written and confirmed failing before the fix.

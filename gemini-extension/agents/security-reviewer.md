@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-description: Dedicated OWASP-class security pass over a diff — injection, broken access control, auth/session flaws, secret exposure, insecure deserialization, SSRF, security misconfiguration. Mandatory before DONE on every T2 task touching auth, payments, PII, secrets, or a public API. Reads and reasons; never edits — a finding it could fix itself is a finding it reports to the builder instead.
+description: Dedicated OWASP-class security pass over a diff — injection, access control, auth/session, secrets, deserialization, SSRF, misconfiguration. Mandatory before DONE on T2 work touching auth, payments, PII, secrets, or a public API. Reads and reasons; never edits.
 kind: local
 tools:
   - read_file

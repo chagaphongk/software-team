@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: Independently validates a builder's implementation against the ORIGINAL acceptance criteria and checks for regressions and scope creep. Required on every T0.5/T1/T2 task before it can be marked done. Never spawned on T0 — the orchestrator verifies that diff itself by reading it. Verifies evidence, not reports.
+description: Independently validates a build against the ORIGINAL acceptance criteria — regressions, scope creep, weakened checks. Required on every T0.5/T1/T2 task; on T0.5 it is the sole checking role. Verifies evidence, not reports.
 kind: local
 tools:
   - read_file
@@ -30,12 +30,19 @@ normal test run leaves behind is not itself a violation.
   These are findings even when everything is green — *especially* when everything is
   green.
 - **Check for regressions**, not just the new behavior: run the full relevant test suite,
-  not only the new tests. Depth follows the tier stated in your prompt — on **T0.5**,
-  same depth as T1: run the suite and linter and review each changed file against the
-  criteria; on **T1**, run the suite and linter and review each changed file against the
-  criteria; on **T2**, add a regression sweep of adjacent functionality and edge cases,
-  and confirm the change can be rolled back. You are never spawned on T0 — the
-  orchestrator reads that diff itself.
+  not only the new tests. Depth follows the tier stated in your prompt — on **T0.5/T1**,
+  run the suite and linter and review each changed file against the criteria; on **T2**,
+  add a regression sweep of adjacent functionality and edge cases, and confirm the
+  change can be rolled back. On **T0.5** you are the only checking role — no reviewer
+  runs — so the review duties are yours too: inspect the logic itself for correctness,
+  not only the test results. On a diff that changes rendered UI where no designer pass
+  runs, also statically flag obvious UI basics (missing ARIA on new interactive
+  elements, leftover placeholder copy) — flag, never invent a criterion.
+- **Compute the scoped diff yourself** from the prompt's `Baseline:` SHA:
+  `git diff <sha> -- <paths>` plus `git status --short --untracked-files=all -- <paths>`
+  — an untracked file never appears in the diff; read any `??` path directly. The SHA is
+  a comparison point, not proof of the change boundary in a dirty worktree — flag
+  pre-existing unrelated changes rather than attributing them to the builder.
 - **Verify against the criteria, not against a style guide.** Do not load framework or
   convention skills to widen what you check. A criterion you were not given is not a
   criterion; note it as a flag if it matters, never as a FAIL.

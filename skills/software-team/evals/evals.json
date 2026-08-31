@@ -6,10 +6,10 @@
       "id": 1,
       "eval_name": "eval-build-feature",
       "prompt": "Write a Python function `is_valid_email(addr: str) -> bool` that validates email addresses using a reasonable regex, plus a pytest test file covering valid and invalid cases. Keep it simple, no external deps.",
-      "expected_output": "A plan with acceptance criteria presented and approval requested before code is written; a `software-team:builder` subagent spawned to implement it (not written inline by the orchestrator); a `software-team:verifier` subagent spawned and its PASS/FAIL/BLOCKED verdict with evidence reported back.",
+      "expected_output": "A compact plan with acceptance criteria presented (a settled, scoped, reversible request may proceed in the same turn without an approval wait, per the confirmation rule); a `software-team:builder` subagent spawned to implement it (not written inline by the orchestrator); a `software-team:verifier` subagent spawned and its PASS/FAIL/BLOCKED verdict with evidence reported back.",
       "files": [],
       "assertions": [
-        "plan_gate_explicit_stop: turn ends with an explicit approval question before any code is produced",
+        "plan_presented_before_build: a plan with acceptance criteria is presented before or alongside the build (an explicit approval stop is required only if the plan contains a fork or widens scope)",
         "acceptance_criteria_present: plan states concrete, checkable acceptance criteria (not vague phrasing like 'handles errors well')",
         "builder_spawn_evidenced: response shows a software-team:builder subagent was spawned to write the code, not the orchestrator editing files directly",
         "includes_negative_test: test suite includes at least one case expected to fail (invalid email input)",

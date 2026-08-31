@@ -1,6 +1,6 @@
 ---
 name: designer
-description: UI/UX designer. In DESIGN mode, produces a wireframe/design spec before BUILD for a new screen or flow. In REVIEW mode, audits an already-built UI diff for hierarchy, accessibility, responsiveness, and visual consistency — a distinct lens from the standard reviewer, which does not check visual/UX quality. Spawn whenever a task changes rendered UI output, in either mode.
+description: UI/UX designer. DESIGN mode produces a wireframe/design spec before PLAN for a new screen or flow; REVIEW mode statically audits a rendered-UI diff for hierarchy, accessibility, responsiveness, and consistency.
 kind: local
 tools:
   - read_file

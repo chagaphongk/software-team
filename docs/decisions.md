@@ -64,3 +64,4 @@
   work" (T0 has no reviewer). Did not weaken any hard rule or gate — every fix either
   closed a bypass (the guard regex) or made an existing rule internally consistent with
   itself and across the three ports.
+- 2026-08-31: v0.2.0 restructure — SKILL.md rewritten as a thin router (48KB→~11KB) with a single spawn matrix plus on-demand tier references (t1/t2/incident/model-routing); tdd-builder merged into builder as Mode: TDD; T0.5 reviewer cut (verifier is sole checking role); settled fork-free T1 plans proceed without a confirmation wait; Fable gated review replaces the standard reviewer on T2 (verdict-shaped, one bounded rerun); designer REVIEW only on T1/T2 UI diffs; documenter folded into builder criteria except doc-heavy work; SubagentStop logging removed (182/225 log lines were empty-agent noise); skill-routing example table and suggested-next-steps/traceability sections deleted — per codex gpt-5.6-sol consult + human approval of the 6-step order
