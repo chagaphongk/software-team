@@ -48,6 +48,21 @@ review** — the mandatory second review exists only as T2's gated review
 (`references/t2.md`). Independence plus model quality is the property that matters; a
 second top-tier review pass on a T1 diff buys nothing.
 
+## When a spawn is rejected
+
+If a spawn call fails because the requested model is unavailable or at capacity
+("Selected model is at capacity"), retry that exact spawn once. If it fails again, fall
+back to the strongest currently-available model that still meets the tier floor — or
+comes nearest below it when nothing available meets it — and state the substitution
+both in that spawn's `Context:` line and in the final report. Never let the run die
+silently on a capacity error.
+
+A fallback is a stopgap, not a downgrade decision: the one-way escalation rules above
+are unchanged, and the tier floor still stands for every later spawn. One exception — a
+security-relevant T2 spawn (`security-reviewer`, or the second review over a diff
+touching auth/payments/PII/secrets/public API) that cannot get a top-tier model stops
+and reports instead of falling back.
+
 ## Planning consult — optional, gated
 
 For a genuine architecture/design trade-off, cross-cutting or hard-to-reverse work, or

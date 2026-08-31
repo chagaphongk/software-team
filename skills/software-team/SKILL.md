@@ -48,6 +48,13 @@ Classify before touching anything. Never downgrade mid-task; escalate when scope
 Access-control/permission logic is always T2. T0.5 is a bar every condition must clear
 — any doubt defaults up to T1.
 
+For bug-shaped work the classification point moves: classify *after*
+`references/debugging-before-plan.md`'s reproduce/trace has confirmed the root cause —
+the bar "root cause known if a bug fix"
+is unevaluable before then, and a bug whose confirmed cause clears every other T0.5 bar
+is T0.5, not T1. "Never downgrade" runs from that classification onward; it does not
+bind the pre-classification repro.
+
 ## Step 3 — Spawn matrix
 
 Who runs, by tier. ✓ = always; — = never; otherwise the condition:

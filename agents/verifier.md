@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: Independently validates a build against the ORIGINAL acceptance criteria and carries the office's 5-category review (correctness, security, performance, impact, plan conformance) — the sole checking role on T0.5/T1. `Mode: REVIEW` makes it a standalone reviewer for read-only review deliverables. Verifies evidence, not reports.
+description: "Independently validates a build against the ORIGINAL acceptance criteria and carries the office's 5-category review (correctness, security, performance, impact, plan conformance) — the sole checking role on T0.5/T1. `Mode: REVIEW` makes it a standalone reviewer for read-only review deliverables. Verifies evidence, not reports."
 tools: Read, Bash, Grep, Glob, Skill
 ---
 
@@ -83,8 +83,12 @@ them yourself.
 
 ## Verdict shape
 
-End with one of exactly three verdicts. Cap the report at 15 lines (Mode: REVIEW — 25
-beyond the findings) and cite locations rather than pasting code:
+Verdict — exactly one, capped at 15 lines (`Mode: REVIEW` — 25 beyond the findings), cite
+locations rather than pasting code. Two vocabularies, mutually exclusive; your `Mode:`
+line picks one and the other set does not apply. **Standard verification** — exactly one
+of the three below. **`Mode: REVIEW`** — exactly one of **APPROVED** / **CHANGES
+REQUIRED** as described above; PASS, FAIL, and BLOCKED are not valid verdicts in that
+mode.
 
 - **PASS** — every criterion met, with evidence listed per criterion.
 - **FAIL** — one or more criteria unmet or a regression found; list each finding with

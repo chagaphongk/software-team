@@ -36,7 +36,10 @@ actually happened, not just been assumed:
 Once the root cause is confirmed — not assumed — this becomes a normal PLAN per
 `## PLAN output shape (T1/T2)` in `references/t1.md`, with one addition to the
 acceptance criteria: a
-regression test that reproduces the original failure and fails without the fix. **For a
+regression test that reproduces the original failure and fails without the fix. This is
+also the point where the risk tier gets classified (SKILL.md Step 2): a bug whose
+confirmed cause clears every T0.5 bar takes the T0.5 small path in `references/t1.md`
+instead of being forced to T1. **For a
 bug that's inherently flaky**, a single deterministic assert isn't achievable — the
 acceptance criterion instead states the hit rate the fix must drive to zero (or
 near-zero) over a stated N runs, or verifies the structural guard directly (e.g. a DB

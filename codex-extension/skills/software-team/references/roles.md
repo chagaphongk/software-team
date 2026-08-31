@@ -1,10 +1,11 @@
 # Role contracts — inlined for the spawn-agent tool
 
 Codex has no plugin-declarable named-persona agent file. Its native subagent primitive
-— `multi_agent_v1__spawn_agent` as of this update; introspect your own tool set for
-the current name — takes an initial task message, `model`/`reasoning_effort` fields,
-and a fork-context flag, but **no system-prompt or persona parameter**: role-specific
-behavior can only be carried in the task message itself.
+— `collaboration.spawn_agent` as of this update; the name has already drifted twice, so
+introspect your own tool set for the current name — takes an initial task message,
+`model`/`reasoning_effort` fields, and a fork-context flag, but **no system-prompt or
+persona parameter**: role-specific behavior can only be carried in the task message
+itself.
 
 **How to use this file:** when SKILL.md says to spawn a role, copy that role's full
 contract below verbatim into the spawn's task message, ahead of the task-specific
@@ -181,14 +182,16 @@ confirm separately that (1) the fix resolves the previous finding and (2) it int
 no regression elsewhere. If `CHANGES REQUIRED`, hand the builder the specific fixes —
 you do not apply them yourself.
 
-Verdict — exactly one of, capped at 15 lines (`Mode: REVIEW` — 25 beyond the findings),
-cite locations: **PASS** (every
+Verdict — exactly one, capped at 15 lines (`Mode: REVIEW` — 25 beyond the findings),
+cite locations. Two vocabularies, mutually exclusive; your `Mode:` line picks one and
+the other set does not apply. **Standard verification** — exactly one of: **PASS** (every
 criterion met, evidence per criterion) / **FAIL** (findings with evidence) /
 **BLOCKED** (say exactly what blocked you; still do the static verification that
 remains possible, list per criterion what was and wasn't checked, and hand the
 orchestrator the exact commands + expected output to finish — their returned output
 comes back to you for a fresh verdict; the orchestrator converting it into a verdict
-itself is self-approval).
+itself is self-approval). **`Mode: REVIEW`** — exactly one of: **APPROVED** /
+**CHANGES REQUIRED**; PASS, FAIL, and BLOCKED are not valid verdicts in that mode.
 
 ---
 

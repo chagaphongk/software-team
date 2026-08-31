@@ -20,6 +20,16 @@ marked dangerous and bypassing it wasn't something the user asked for. **Functio
 this yourself in an interactive session** (not `codex exec`) before trusting the guard
 hooks for anything security-sensitive.
 
+**2026-08-31 update, on Codex 0.151.0, in a non-interactive `codex exec` session**: this
+plugin's `SubagentStart` hook **fired** and wrote `.software-team/state/agent-log.jsonl`
+— 4 entries, including for sub-agents spawned via `collaboration.spawn_agent`.
+`hook: PreToolUse` events were also observed firing in the same exec transcript, though
+not attributable specifically to this plugin's guard scripts — block-before-execution is
+still untested. This **weakens the interactive hook-trust-gate hypothesis** above (that
+was 0.147.0-era evidence; here hooks fired in a non-interactive session on 0.151.0) and
+**resolves the "does `collaboration.spawn_agent` trigger `SubagentStart`" unknown** that
+used to sit in "Not confirmed" below.
+
 
 Ported from the Claude Code plugin's `hooks/hooks.json`, same event names and the same
 `${CLAUDE_PLUGIN_ROOT}` variable. Verified and unverified pieces, separated honestly:
@@ -34,6 +44,9 @@ entries for the already-installed `ponytail` plugin and this user's own global
   Code and Codex per its `docs/agent-portability.md`) uses it and installs cleanly.
 - The matcher `Edit|Write|apply_patch` is real — it's the literal matcher in this user's
   own global `~/.codex/hooks.json` `PostToolUse` entry.
+- Sub-agents spawned via `collaboration.spawn_agent` **do** trigger `SubagentStart`
+  (0.151.0, in `codex exec` — not the 0.147.0 install above — evidenced by this plugin's
+  own `.software-team/state/agent-log.jsonl` entries; see the 2026-08-31 update).
 
 **A validation quirk, tested and resolved**: `.codex-plugin/plugin.json` declares
 `"hooks": "./hooks/hooks.json"` despite this machine's own `plugin-creator` skill
@@ -45,7 +58,8 @@ installed plugin (which also declares the field and visibly registers hook state
 own events). Trust the real install over the scaffold validator on this specific point.
 
 **Not confirmed**:
-- `PreToolUse` — only `PostToolUse` was observed. If Codex does not fire `PreToolUse`,
+- `PreToolUse` — observed firing as an event on 0.151.0; block-before-execution and the
+  payload shape are still unverified. If a `PreToolUse` hook can't actually block,
   `guard_bash.py`/`guard_secrets.py` block *after* the command already ran, which
   defeats the point of a guard (blocking a force-push after it already pushed is
   useless). Trigger a blocked pattern yourself and confirm it's actually rejected
@@ -58,8 +72,6 @@ own events). Trust the real install over the scaffold validator on this specific
   `tool_input.file_path`, `hook_event_name`, `agent_type`, `session_id`) — the scripts in
   this directory parse several plausible key names defensively (same approach as the
   Gemini CLI port) rather than assuming Codex's shape matches Claude's exactly.
-- Whether `collaboration.spawn_agent` sub-agents actually trigger `SubagentStart` at all,
-  as opposed to only interactive multi-agent sessions.
 
 Function-test before trusting this in production: trigger `git push --force` inside a
 throwaway repo and confirm it's rejected *before* it reaches the network, and touch a
