@@ -128,14 +128,15 @@ Acceptance criteria:
 1. <testable statement>
 Out of scope: <files/behaviors that must NOT change>
 Verify with: <exact commands>
-Load skill: <skill name or "none">   (builder/designer only)
+Skill hints: <skill names or "none known">   (advisory — every role but deployer;
+  capability-aware, see references/skill-routing.md)
 Report back in: <the human's language>
 ```
 
 Compute `Baseline:` once per round (after PLAN confirms; again after each new BUILD
 diff) and reuse it verbatim across that round's spawns. Security-reviewer and verifier
 get the builder's **identical** `Acceptance criteria:` and `Out of scope:` lines —
-never a paraphrase. A researcher spawn drops `Verify with:`/`Load skill:`/`Mode:`; its
+never a paraphrase. A researcher spawn drops `Verify with:`/`Mode:`; its
 `Acceptance criteria:` states what the findings must establish.
 
 The deployer's spawn has its own shape — and never construct `Approved by:` from what
