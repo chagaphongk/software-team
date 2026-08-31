@@ -39,12 +39,11 @@ Escalation is one-way within a task, on both axes: a tier moved up stays up; a m
 moved up stays up. Never downgrade mid-task to save cost.
 
 **Other roles:** `security-reviewer` matches the builder's model/effort (under the T2
-fully-specified exception it stays at the top tier); `documenter` and `deployer` always
-run at the cheapest tier (precise execution or next-reader-checked prose — nothing left
-to decide); `designer` DESIGN mode follows the difficulty scale, REVIEW mode matches
-the paired review pass.
+fully-specified exception it stays at the top tier); `deployer` always runs at the
+cheapest tier (precise execution of an approved command — nothing left to decide);
+`designer` follows the difficulty scale.
 
-**A T1 top-tier build gets a top-tier reviewer role, not a fresh-context second
+**A T1 top-tier build gets a top-tier verifier, not a fresh-context second
 review** — the mandatory second review exists only as T2's gated review
 (`references/t2.md`). Independence plus model quality is the property that matters; a
 second top-tier review pass on a T1 diff buys nothing.

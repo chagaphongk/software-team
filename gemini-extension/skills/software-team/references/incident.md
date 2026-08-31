@@ -11,7 +11,7 @@ a fixed order:
    recovered. The diagnosis substitutes for the usual prior gates on the deployer's
    spawn.
 3. **Confirm** — `verifier` confirms recovery with evidence.
-4. **Postmortem** — `documenter` writes a one-page postmortem after recovery is
+4. **Postmortem** — `builder` writes a one-page postmortem after recovery is
    verified; its operational claims trace to the researcher's diagnosis and the
    deployer's/verifier's recorded evidence (there may be no code diff to cite).
 

@@ -54,9 +54,9 @@ tool). Two ways to get framework guidance to it, in order of preference:
   the reliable path on Codex until skill-loading-by-a-sub-agent is confirmed — never
   assume a sub-agent knows a convention you did not write down.
 
-`reviewer`, `security-reviewer`, and `verifier` do **not** get framework skills by
-default. Their loyalty is to the acceptance criteria and the diff; a style guide loaded
-into any of them turns into invented criteria the builder never received.
+`verifier` does **not** get framework skills by default. Its loyalty is to the
+acceptance criteria and the diff; a style guide loaded into it turns into invented
+criteria the builder never received.
 
 ## When the right skill is not installed
 

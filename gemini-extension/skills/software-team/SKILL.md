@@ -1,6 +1,6 @@
 ---
 name: software-team
-description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with independent review/verify passes on non-trivial work. Classify the risk tier (T0/T0.5/T1/T2) first, route by a spawn matrix through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, and gate risky or irreversible work behind human approval — deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself. Prefer this skill whenever the task needs real parallel delegation, multi-file builds, tiered model routing, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the work is not a build at all. Do NOT use for trivial one-liner questions or quick syntax lookups.'
+description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with an independent verifier — which also carries the review — on non-trivial work. Classify the risk tier (T0/T0.5/T1/T2) first, route by a spawn matrix through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, and gate risky or irreversible work behind human approval — deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself. Prefer this skill whenever the task needs real parallel delegation, multi-file builds, tiered model routing, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the work is not a build at all. Do NOT use for trivial one-liner questions or quick syntax lookups.'
 ---
 
 # Software Team (Gemini CLI port)
@@ -27,8 +27,8 @@ typo fix).
 | New feature, requirements unsettled | `references/unsettled-requirements.md` |
 | Loose idea, too big for one session | `references/plan-sizing.md` |
 | Written plan/spec ready to execute | The office loop — Step 2 |
-| Read-only deliverable: review, audit, critique | Spawn `reviewer` (and/or `security-reviewer`, `designer` REVIEW) directly, in one batch when several apply — no PLAN gate; the findings are the deliverable. Acting on findings is a new BUILD task |
-| New screen/flow with no design spec | `designer` DESIGN mode before PLAN — its spec feeds PLAN, not replaces it |
+| Read-only deliverable: review, audit, critique | Spawn `verifier` `Mode: REVIEW` (plus `security-reviewer` when security is the focus, in one batch) directly — no PLAN gate; the findings are the deliverable. Acting on findings is a new BUILD task |
+| New screen/flow with no design spec | `designer` before PLAN — its spec feeds PLAN, not replaces it |
 | Production down or broken right now | **INCIDENT** — `references/incident.md` |
 | Clear ask, known scope, code to change | Step 2 |
 
@@ -57,23 +57,18 @@ Who runs, by tier. ✓ = always; — = never; otherwise the condition:
 | Role | T0 | T0.5 | T1 | T2 |
 |---|---|---|---|---|
 | `researcher` | — | — | context non-obvious; always for a bug | ✓ (skip only a fully-specified static change whose current-state/blast-radius/rollback facts are already evidenced) |
-| `builder` (`Mode: TDD` for bug fixes / TDD plans) | ✓ cheapest tier | ✓ balanced tier | ✓ | ✓ most capable tier |
-| `verifier` | — orchestrator reads the diff | ✓ (sole checking role) | ✓ | ✓ |
-| `reviewer` | — | — (verifier absorbs it) | any non-mechanical logic change | — (Deep Think review replaces it) |
+| `builder` (`Mode: TDD` for bug fixes / TDD plans; docs the criteria call for are its work) | ✓ cheapest tier | ✓ balanced tier | ✓ | ✓ most capable tier |
+| `verifier` (sole checking role — its pass includes the 5-category review) | — orchestrator reads the diff | ✓ | ✓ | ✓ |
 | Deep Think review (fresh-context, extended-reasoning class) | — | — | — | ✓ once + one bounded rerun — this IS the T2 review (`references/t2.md`) |
 | `security-reviewer` | — | — | — | diff touches auth/payments/PII/secrets/public API |
-| `designer` REVIEW | — | — | rendered-UI diff (not text-only) | rendered-UI diff |
-| `documenter` | doc-only task (replaces builder) | — | doc-heavy work only; else fold docs into builder criteria | same as T1 |
+| `designer` (design spec before PLAN) | — | — | new screen/flow with no design spec | same as T1 |
 | `deployer` | any tier — the task's own completion requires deploy/release/publish/push/external delete; never run these yourself ||||
 
 Ordering:
 
 - A verifier follows its builder — never parallel with the build it verifies.
-- Read-only passes over the same finished diff (reviewer, security-reviewer, designer
-  REVIEW, verifier) run in one parallel batch; sequence verifier first only when the
-  reviewer needs its run-it-yourself evidence.
-- Documenter runs inside BUILD — after its builder, before review/verify — so its diff
-  joins the combined diff those passes check. (INCIDENT postmortem: after recovery.)
+- Read-only passes over the same finished diff (security-reviewer, Deep Think review,
+  verifier) run in one parallel batch.
 - Parallel builders only when their `Files:` don't overlap and neither depends on the
   other's output — never split one coherent change to look efficient.
 - Integrate only after a full batch returns; read every report.
@@ -81,21 +76,21 @@ Ordering:
 ## T0 fast path — self-contained, read nothing else for a T0
 
 1. Confirm T0: mechanical, reversible, no logic change.
-2. Spawn one `builder` at the cheapest tier (`documenter` for doc-only) with a
-   four-field prompt: `Task:` / `Files:` / one `Acceptance criterion:` /
+2. Spawn one `builder` at the cheapest tier with a four-field prompt:
+   `Task:` / `Files:` / one `Acceptance criterion:` /
    `Out of scope:`, plus `Report back in:` the human's language.
 3. Read the diff yourself: `git diff -- <paths>` **plus** `git status --short
    --untracked-files=all -- <paths>` — a new untracked file never appears in the diff;
    read any `??` path directly.
 4. Run the smallest relevant deterministic check (lint/format at minimum).
-5. Report with evidence. No researcher, reviewer, verifier, or designer spawn.
+5. Report with evidence. No researcher, verifier, or designer spawn.
 
 ## Tier playbooks
 
 Read the matching reference before starting; each is the full procedure for its tier:
 
-- **T0.5 and T1** → `references/t1.md` — PLAN shape, the confirmation rule, reviewer
-  condition, the 3-round convergence cap.
+- **T0.5 and T1** → `references/t1.md` — PLAN shape, the confirmation rule, the
+  3-round convergence cap.
 - **T2** → `references/t2.md`, plus `references/rules.md` (the charter) before PLAN —
   approval gate, Deep Think gated review, security pass.
 - **Model per spawn** → `references/model-routing.md` — difficulty scale, tier floors,
@@ -108,14 +103,14 @@ Read the matching reference before starting; each is the full procedure for its 
 ```
 Task: <one sentence>
 Tier: T0|T0.5|T1|T2
-Mode: standard|TDD            (builder only)
+Mode: standard|TDD (builder) · REVIEW (verifier, standalone review only)
 Model: <the intended model tier per references/model-routing.md — applied via the
   per-delegation override if your spawn mechanism supports one, else a flag for the
   human/log>
 Files: <exact paths>
 Baseline: <git SHA — a comparison point, not the exact change boundary in a dirty
-  worktree; reviewer/verifier compute the scoped diff and untracked-file check per
-  their own contracts>
+  worktree; the verifier computes the scoped diff and untracked-file check per its
+  own contract>
 Context: <error text, constraints, decisions; researcher Evidence lines forwarded
   verbatim so the builder doesn't re-derive them>
 Acceptance criteria:
@@ -127,11 +122,10 @@ Report back in: <the human's language>
 ```
 
 Compute `Baseline:` once per round (after PLAN confirms; again after each new BUILD
-diff) and reuse it verbatim across that round's spawns. Reviewer, security-reviewer,
-and verifier get the builder's **identical** `Acceptance criteria:` and `Out of scope:`
-lines — never a paraphrase. A researcher spawn drops `Verify with:`/`Load skill:`/
-`Mode:`; its `Acceptance criteria:` states what the findings must establish. The
-documenter gets the builder's `Files:`/`Context:` plus its finished diff to read.
+diff) and reuse it verbatim across that round's spawns. Security-reviewer and verifier
+get the builder's **identical** `Acceptance criteria:` and `Out of scope:` lines —
+never a paraphrase. A researcher spawn drops `Verify with:`/`Load skill:`/`Mode:`; its
+`Acceptance criteria:` states what the findings must establish.
 
 The deployer's spawn has its own shape — and never construct `Approved by:` from what
 you think the human meant; quote their actual words or stop and ask:
@@ -140,7 +134,7 @@ you think the human meant; quote their actual words or stop and ask:
 Deploy with: <exact command, verbatim — one irreversible action per spawn>
 Target: <branch/environment/package/version>
 Approved by: <the human's own words approving this exact action, quoted, with when>
-Prior gates: <verifier PASS / Deep Think or reviewer APPROVED / security-reviewer
+Prior gates: <verifier PASS / Deep Think APPROVED / security-reviewer
   CLEAR — each that applies>
 Report back in: <the human's language>
 ```
@@ -194,10 +188,9 @@ The `— <why>` is the point. Read the last ~10 entries when resuming, after a
 DONE only when, in order:
 
 1. Deterministic checks pass — format, lint, typecheck, tests.
-2. Every verdict the spawn matrix required came back clean — verifier `PASS`,
-   reviewer/Deep Think `APPROVED`, security-reviewer `CLEAR`, designer `APPROVED` —
-   with the evidence recorded (exact commands and results). A designer verdict states
-   whether it rests on rendered evidence or a static read.
+2. Every verdict the spawn matrix required came back clean — verifier `PASS`
+   (`APPROVED` in `Mode: REVIEW`), Deep Think `APPROVED`, security-reviewer `CLEAR` —
+   with the evidence recorded (exact commands and results).
 3. The diff is scoped to the task — every changed line traces to the request — and any
    course-changing decision got its line in `docs/decisions.md`.
 4. Documentation the plan called for was built inside BUILD and covered by item 2.

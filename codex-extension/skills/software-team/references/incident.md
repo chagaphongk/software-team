@@ -11,7 +11,7 @@ fixed order:
    service has recovered. The diagnosis substitutes for the usual prior gates on the
    deployer's spawn.
 3. **Confirm** — the `verifier` role confirms recovery with evidence.
-4. **Postmortem** — the `documenter` role writes a one-page postmortem after recovery
+4. **Postmortem** — the `builder` role writes a one-page postmortem after recovery
    is verified; its operational claims trace to the researcher's diagnosis and the
    deployer's/verifier's recorded evidence (there may be no code diff to cite).
 

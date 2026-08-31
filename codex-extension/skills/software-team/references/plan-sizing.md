@@ -1,6 +1,6 @@
 # When PLAN doesn't fit one session
 
-Read this when `## PLAN output shape` in `SKILL.md` flags the work as oversized. Some
+Read this when `## PLAN output shape (T1/T2)` in `references/t1.md` flags the work as oversized. Some
 tasks only reveal their true size once you start drafting. Use these terms: a **fork**
 (options that genuinely diverge, already sharp enough to ask) versus **fog** (a question
 you can tell is coming but can't yet phrase sharply enough to act on).

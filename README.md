@@ -2,8 +2,8 @@
 
 A Claude Code plugin that runs a task through a real engineering office — an
 orchestrator that classifies risk and delegates, plus spawned `researcher` / `builder`
-(with a strict TDD mode) / `reviewer` / `security-reviewer` / `documenter` / `verifier`
-/ `deployer` / `designer` subagents — instead of one Claude instance role-playing hats
+(with a strict TDD mode) / `security-reviewer` / `verifier` (which also carries the
+5-category review) / `deployer` / `designer` subagents — instead of one Claude instance role-playing hats
 in a single conversation.
 The orchestrator never edits a project file itself, at any tier: even a one-character fix
 goes through a spawned builder. This no-self-edit invariant, and the deployer-only
@@ -15,7 +15,7 @@ deterministic way today to prove the orchestrator made zero direct writes. One e
 exception: the orchestrator may directly append to "office state" — `docs/decisions.md`
 decision-log entries and `.claude/state/*` — which isn't covered by the invariant.
 Independent spawns run in parallel batches by default — three unrelated builders, or a
-reviewer alongside a security-reviewer on the same finished diff — never one at a time
+verifier alongside a security-reviewer on the same finished diff — never one at a time
 just because that's the simpler control flow.
 
 ## Why this exists next to `agent-office`
@@ -27,18 +27,17 @@ replacement — both stay published. Reach for `software-team` specifically when
 - **Zero self-edit, every tier.** agent-office lets the orchestrator handle T0 (typos,
   trivial single-file changes) inline. `software-team` spawns a builder even for that —
   the always-delegate invariant is the point.
-- **A dedicated review pass.** agent-office folds review into VERIFY. `software-team`
-  runs a separate `reviewer` subagent against a 5-category checklist (correctness,
-  security, performance, impact, plan conformance) on any non-mechanical T1 logic
-  change, and a Fable-model gated review holding the same checklist on every T2 diff —
-  in parallel with the verifier over the same finished diff. On T0.5 the verifier is
-  the sole checking role and absorbs the review duties.
+- **A review pass with teeth.** agent-office folds review into VERIFY with no fixed
+  checklist. `software-team`'s verifier carries an explicit 5-category checklist
+  (correctness, security, performance, impact, plan conformance) on any non-mechanical
+  logic change, and a Fable-model gated review holds the same checklist on every T2
+  diff — in parallel with the verifier over the same finished diff.
 - **Hooks installed by default.** Destructive-command blocking, secret-file blocking, and
   subagent-spawn logging ship as first-class plugin hooks (`hooks/hooks.json`), not an
   opt-in `examples/` folder you wire up yourself.
 
 Reach for `agent-office` instead when you want the leaner default — trivial work handled
-inline, no reviewer round trip.
+inline.
 
 ## What it does
 
@@ -64,7 +63,8 @@ inline, no reviewer round trip.
   self-contained fast path (one Haiku builder, orchestrator verifies by diff, nothing
   else loads); T0.5 is a fast lane for a small, scoped, low-judgment change: a no-wait
   PLAN, then `BUILD → VERIFY` with the verifier as sole checking role; T1 always gets
-  an independent verifier, plus a reviewer on any non-mechanical logic change, and a
+  an independent verifier whose pass includes the 5-category review on any
+  non-mechanical logic change, and a
   settled fork-free T1 plan proceeds without an approval wait; T2 requires human plan
   approval, opus-tier subagents (except a fully-specified, no-judgment-left build,
   which may run its builder at the T1 floor), a Fable gated review of the finished diff
@@ -72,27 +72,25 @@ inline, no reviewer round trip.
   auth/payments/PII/secrets/a public API. Review and verify passes over the same
   finished diff run in one parallel batch.
 - **Read-only deliverables skip the plan gate** — a code review or audit spawns
-  `software-team:reviewer` directly, `software-team:security-reviewer` for a
-  security-focused audit, or both in parallel when the ask covers correctness and
+  `software-team:verifier` in `Mode: REVIEW` directly, `software-team:security-reviewer`
+  for a security-focused audit, or both in parallel when the ask covers correctness and
   security together; its findings are the deliverable.
 - **Full-office roster, not just build/verify** — `security-reviewer` runs a dedicated
-  OWASP-class pass before DONE on T2 security-sensitive work; `documenter` updates
-  README/CHANGELOG/docstrings as part of BUILD, before REVIEW/VERIFY (or directly on T0),
-  tracing every line to the diff; `deployer` is the only agent allowed to run a
+  OWASP-class pass before DONE on T2 security-sensitive work; documentation the
+  criteria call for (README/CHANGELOG/docstrings) is the builder's work inside BUILD,
+  tracing every claim to the diff; `deployer` is the only agent allowed to run a
   deploy/publish/push/delete, and only
   with the human's quoted approval in its prompt — the orchestrator itself never runs one; `designer`
-  produces a UI/UX spec before BUILD for a new screen (DESIGN mode) and audits any diff
-  that changes rendered output for hierarchy/accessibility/consistency before DONE
-  (REVIEW mode) — a distinct lens from the standard reviewer's correctness/security/
-  performance/impact/plan-conformance checklist.
-- **Parallel by default when scopes are disjoint** — multiple independent builders, or a
-  reviewer/security-reviewer/designer all reading the same finished diff, spawn in one
-  batch instead of one at a time.
+  produces a UI/UX spec before BUILD for a new screen or flow, and the verifier
+  statically flags UI basics on any diff that changes rendered output.
+- **Parallel by default when scopes are disjoint** — multiple independent builders, or
+  the read-only passes (verifier, security-reviewer, T2's Fable review) all reading the
+  same finished diff, spawn in one batch instead of one at a time.
 - **Model picked per spawn by difficulty, never a fixed default** — mechanical work
   gets Haiku, a small well-understood change gets Sonnet, anything complex (interacting
   files, concurrency, a real judgment call, a failed round) gets Opus. The risk tier
   sets a floor the difficulty pick can't undercut; a T1 Opus build gets an independent
-  Opus reviewer, while the Fable review is T2's gate.
+  Opus verifier, while the Fable review is T2's gate.
 - **A strict TDD mode** — `software-team:builder` with `Mode: TDD` (used for every bug
   fix) implements through red (a test confirmed to fail for the right reason) → green
   (the minimum code to pass) → refactor, reporting the red/green trail per criterion as
@@ -112,7 +110,7 @@ inline, no reviewer round trip.
   logged); `hooks/pre_compact.py` marks context-compaction
   events so `/software-team:workflow` knows to re-read `docs/decisions.md` instead
   of trusting compacted memory.
-- **Known limit: reviewers keep Bash.** `reviewer`, `security-reviewer`, and `verifier`
+- **Known limit: review roles keep Bash.** `security-reviewer` and `verifier`
   subagents have no Write/Edit tool, but they keep Bash access — needed for `git diff` and
   running tests. Their read-only status is instruction-enforced, not sandboxed; nothing
   stops a Bash command from writing a file, the role contract just says not to.
@@ -126,7 +124,7 @@ inline, no reviewer round trip.
 
 ## Install
 
-Requires `python3` on `PATH` (the hooks use it). Current version: `0.2.0`.
+Requires `python3` on `PATH` (the hooks use it). Current version: `0.3.0`.
 
 1. Register the marketplace, once per machine:
 
@@ -253,9 +251,9 @@ manifest schema — no `agents` field exists). Its native subagent primitive,
 `collaboration.spawn_agent`, takes a task message and an optional `fork_turns: "none"` for
 fresh context, but has no system-prompt/persona parameter (confirmed empirically via a
 sandboxed, read-only `codex exec` probe on 2026-08-20). So instead of an `agents/`
-directory, `skills/software-team/references/roles.md` holds all 8 role contracts
-(builder with its TDD mode, reviewer, security-reviewer, verifier, researcher,
-documenter, deployer, designer) as text to copy verbatim into the spawn's task message — the office's
+directory, `skills/software-team/references/roles.md` holds all 6 role contracts
+(builder with its TDD mode, security-reviewer, verifier with its REVIEW mode,
+researcher, deployer, designer) as text to copy verbatim into the spawn's task message — the office's
 state machine, tiers, and hard rules are otherwise unchanged.
 
 **Installed and confirmed loading live** (2026-08-20): registered as its own marketplace
@@ -364,4 +362,4 @@ treat `agy plugin import claude` as best-effort, not a substitute for that.
 ## Related
 
 [agent-office](https://github.com/chagaphongk/agent-office) — the leaner Claude Code
-sibling; T0 handled inline, no dedicated reviewer.
+sibling; T0 handled inline.

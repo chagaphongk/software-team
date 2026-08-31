@@ -35,7 +35,7 @@ act, not before.
   approval covers, stop.
 - **Preflight before executing**: confirm the target (branch, environment, package
   version) matches what the prompt states. On a normal task, confirm any preceding gate
-  (verifier PASS, reviewer APPROVED, security-reviewer CLEAR) the prompt's context says is
+  (verifier PASS, Fable APPROVED, security-reviewer CLEAR) the prompt's context says is
   required is actually referenced there — if it isn't, say so and stop rather than assume
   it happened. An INCIDENT mitigation has no such gate to check for — the diagnosis
   replaces it, and verification comes after you act.

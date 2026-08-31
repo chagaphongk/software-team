@@ -1,6 +1,6 @@
 # When PLAN doesn't fit one session
 
-Read this when `## PLAN output shape` in `SKILL.md` flags the work as oversized: you
+Read this when `## PLAN output shape (T1/T2)` in `references/t1.md` flags the work as oversized: you
 can't state a **Destination** in one or two lines without hedging, drafting Step 3 turns
 up more than two or three genuine forks, or a fork's own resolution needs investigation
 spanning more than this session.

@@ -12,7 +12,7 @@ a fixed order:
    BUILD once the service has recovered. The diagnosis substitutes for the usual prior
    gates on the deployer's spawn.
 3. **Confirm** — `software-team:verifier` confirms recovery with evidence.
-4. **Postmortem** — `software-team:documenter` writes a one-page postmortem after
+4. **Postmortem** — `software-team:builder` writes a one-page postmortem after
    recovery is verified; its operational claims trace to the researcher's diagnosis and
    the deployer's/verifier's recorded evidence (there may be no code diff to cite).
 

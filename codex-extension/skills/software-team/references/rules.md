@@ -40,7 +40,7 @@ returned in a user-facing message.
 
 A claim without evidence is not a result. Every decision, verdict, and completion cites
 verifiable evidence — file paths, exact commands, exit codes, test output — recorded so a
-reviewer can reproduce it independently. "It should work" is a failure. "Tests pass"
+verifier can reproduce it independently. "It should work" is a failure. "Tests pass"
 without the output is not a verification.
 
 *Why:* language models produce fluent confidence for free; evidence is the only signal

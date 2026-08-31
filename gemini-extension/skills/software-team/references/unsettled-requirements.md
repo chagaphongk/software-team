@@ -9,7 +9,7 @@ installed**: a greenfield feature or product whose requirement space is itself w
 deserves a full intent/design exploration, and that skill's output becomes this file's
 settled input. **Routing out is not handing off the task**: when the brainstorm
 concludes, come back to `SKILL.md` and carry its settled requirements straight into
-`## PLAN output shape` and the normal office loop — the office still builds, reviews, and
+`## PLAN output shape (T1/T2)` (`references/t1.md`) and the normal office loop — the office still builds, reviews, and
 verifies what the brainstorm decided. The steps below are the self-contained path — use
 them when no such skill is installed, or when the work is small enough that a few direct
 questions settle it. Before drafting anything:
@@ -21,7 +21,7 @@ questions settle it. Before drafting anything:
    or the request names a system this repo isn't), say that plainly as the first thing —
    don't draft product-shaped forks against the wrong target.
 2. **Surface every genuinely open question as an explicit fork**, per
-   `## Asking the human` in `SKILL.md`: concrete options (2–4), one marked recommended,
+   the fork shape in `references/t1.md`: concrete options (2–4), one marked recommended,
    the cost of each. Never a bare "what do you want?" — that pushes the thinking the
    office is supposed to do back onto the human.
 3. **Stop and wait.** Don't draft PLAN speculatively "in case" the human picks the option
@@ -29,5 +29,5 @@ questions settle it. Before drafting anything:
    trip step 1 exists to avoid.
 
 Once every fork here resolves, the request has a destination — proceed to
-`## PLAN output shape` in `SKILL.md` (or `references/plan-sizing.md` if resolving these
+`## PLAN output shape (T1/T2)` in `references/t1.md` (or `references/plan-sizing.md` if resolving these
 questions reveals the work is actually oversized).

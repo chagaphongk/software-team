@@ -55,8 +55,8 @@ close that, in order of preference:
   `Context:` block as explicit rules. Never assume a subagent knows a convention you did
   not write down.
 
-`reviewer` and `verifier` do **not** get framework skills by default. Their loyalty is to
-the acceptance criteria and the diff; a style guide loaded into either turns into invented
+`verifier` does **not** get framework skills by default. Its loyalty is to the
+acceptance criteria and the diff; a style guide loaded into it turns into invented
 criteria the builder never received.
 
 ## When the right skill is not installed

@@ -34,7 +34,8 @@ actually happened, not just been assumed:
    leaves siblings broken.
 
 Once the root cause is confirmed — not assumed — this becomes a normal PLAN per
-`## PLAN output shape` in `SKILL.md`, with one addition to the acceptance criteria: a
+`## PLAN output shape (T1/T2)` in `references/t1.md`, with one addition to the
+acceptance criteria: a
 regression test that reproduces the original failure and fails without the fix. **For a
 bug that's inherently flaky**, a single deterministic assert isn't achievable — the
 acceptance criterion instead states the hit rate the fix must drive to zero (or
