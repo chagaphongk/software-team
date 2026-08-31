@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: Independently validates a build against the ORIGINAL acceptance criteria and carries the office's 5-category review (correctness, security, performance, impact, plan conformance) — the sole checking role on T0.5/T1. `Mode: REVIEW` makes it a standalone reviewer for read-only review deliverables. Verifies evidence, not reports.
+description: "Independently validates a build against the ORIGINAL acceptance criteria and carries the office's 5-category review (correctness, security, performance, impact, plan conformance) — the sole checking role on T0.5/T1. `Mode: REVIEW` makes it a standalone reviewer for read-only review deliverables. Verifies evidence, not reports."
 kind: local
 tools:
   - read_file

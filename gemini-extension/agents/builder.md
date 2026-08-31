@@ -1,6 +1,6 @@
 ---
 name: builder
-description: Implements an approved plan against explicit acceptance criteria — spawned for every task that touches a project file; the orchestrator never edits files itself. `Mode: TDD` in its prompt switches it to strict red-green-refactor. Never verifies or approves its own work.
+description: "Implements an approved plan against explicit acceptance criteria — spawned for every task that touches a project file; the orchestrator never edits files itself. `Mode: TDD` in its prompt switches it to strict red-green-refactor. Never verifies or approves its own work."
 kind: local
 tools:
   - read_file
