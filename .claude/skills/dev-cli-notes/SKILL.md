@@ -90,3 +90,18 @@ Also: the Read tool refuses a re-read of a file that hasn't changed since your l
 ("Wasted call — file unchanged"). After an Edit, the harness already holds the new state;
 don't Read it back to "verify" — run the actual check (tests, syntax parse, `git diff`)
 instead.
+
+## Gemini CLI extension update on this machine
+
+`gemini extensions update software-team` hangs forever when run non-interactively (it
+asks a `Do you want to continue? [Y/n]` consent question on stdin) — pipe answers in
+(`printf 'y\ny\n' | gemini extensions update software-team`) or avoid the prompt
+entirely on install with `--consent --skip-settings`. `extensions install` takes the
+local path as a **positional** `<source>` argument (there is no `--path` flag). Trap
+confirmed live: a consent-interrupted update can still have copied the new version
+into `~/.gemini/extensions/<name>`, after which a retry reports "already up to date"
+while the installed copy holds broken/partial files — fix by `uninstall` then a fresh
+`install <path> --consent`. The `Assertion failed ... src\win\async.c` line printed
+after a successful install/uninstall is benign node teardown noise, not a failure.
+`agy plugin import gemini --force` has the same stdin trait — run it foreground with
+piped `y`s, not as a detached background command, or it hangs indefinitely.
