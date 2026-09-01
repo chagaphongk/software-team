@@ -53,8 +53,19 @@ inline.
   PLAN drafts anything. Brand-new, large-scope requirements route to a brainstorming
   skill first when one is installed, then return with settled input for PLAN; work too
   big for one session prefers `wayfinder`'s decision-ticket map over the in-repo Phase
-  Map when installed — either way, the office loop (PLAN → BUILD → REVIEW → VERIFY) is
-  what actually builds each settled piece, never bypassed by the hand-off.
+  Map — wayfinder ships built into this office, not an external skill — either way, the
+  office loop (PLAN → BUILD → REVIEW → VERIFY) is what actually builds each settled
+  piece, never bypassed by the hand-off.
+- **Wayfinder's map hands off to `to-spec`, then `to-tickets`** — the map's
+  Destination/Decisions/Fog-of-war/Out-of-scope shape, charted one `grilling` /
+  `prototype` / `research` / `task` ticket at a time, resolves into `to-spec`'s spec
+  (seam-first: the API/module/CLI boundaries get explicit human confirmation before
+  spec prose), which `to-tickets` slices into vertical, tracer-bullet tickets ordered
+  by a blocking-edge DAG with an open frontier; each ticket then re-enters the normal
+  office loop as its own PLAN → BUILD → REVIEW → VERIFY. Tickets and the map persist in
+  a local-only tracker (`.claude/state/tracker/`, no GitHub/`gh` dependency), and the
+  verifier's `Mode: REVIEW-DUAL` gives that finished work independently-verdicted
+  standards and spec reviews, never merged into one.
 - **Stack-aware skill selection** — `references/skill-routing.md` detects the framework
   from the repo (not the request) and has the builder load the matching installed skill,
   re-derived per project from the actual installed-skill list rather than a hardcoded
@@ -124,7 +135,7 @@ inline.
 
 ## Install
 
-Requires `python3` on `PATH` (the hooks use it). Current version: `0.4.2`.
+Requires `python3` on `PATH` (the hooks use it). Current version: `0.5.0`.
 
 1. Register the marketplace, once per machine:
 
