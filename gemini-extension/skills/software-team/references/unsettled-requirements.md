@@ -31,3 +31,28 @@ questions settle it. Before drafting anything:
 Once every fork here resolves, the request has a destination — proceed to
 `## PLAN output shape (T1/T2)` in `references/t1.md` (or `references/plan-sizing.md` if resolving these
 questions reveals the work is actually oversized).
+
+## What the interview leaves behind
+
+Two artifacts can come out of this interview besides the settled requirements. Both are
+real project files, **not** office state: unlike `.gemini/state/tracker/` files
+(`references/tracker.md`), the orchestrator does not write them directly. They go into the
+PLAN's Steps as ratifications and are written by the `builder` spawn like any other project
+file — the builder's contract counts them as documentation the criteria called for.
+
+**Vocabulary → `CONTEXT.md`.** When the interview settles what a term means — an entity, a
+state, a domain rule the team keeps re-explaining — that definition belongs in the
+project's `CONTEXT.md` glossary, created with a `# Context` heading on first use, the same
+create-on-first-use pattern `docs/decisions.md` uses. Vocabulary and domain meaning only:
+no implementation detail, no rationale for a design choice — that is the decision log's job.
+
+**Decision → `docs/adr/NNNN-title.md`,** but only when all three gates clear:
+
+1. **Hard to reverse** — undoing it later costs a migration, a rewrite, or a breaking change.
+2. **Surprising without the reasoning** — a competent reader arriving cold would assume the
+   other option was chosen.
+3. **A real trade-off** — the rejected option had genuine merit; a forced move with one
+   viable answer is not an ADR.
+
+Most decisions clear one or two and stay a `docs/decisions.md` line, exactly like any other
+course-changing decision. Writing an ADR for a forced move buries the ones that matter.

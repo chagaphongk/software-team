@@ -1,6 +1,6 @@
 ---
 name: software-team
-description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with an independent verifier — which also carries the review — on non-trivial work. Classify the risk tier (T0/T0.5/T1/T2) first, route by a spawn matrix through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, and gate risky or irreversible work behind human approval — deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself. Prefer this skill whenever the task needs real parallel delegation, multi-file builds, tiered model routing, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the work is not a build at all. Do NOT use for trivial one-liner questions or quick syntax lookups.'
+description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with an independent verifier — which also carries the review — on non-trivial work. Classify the risk tier (T0/T0.5/T1/T2) first, route by a spawn matrix through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, and gate risky or irreversible work behind human approval — deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself. Prefer this skill whenever the task needs real parallel delegation, multi-file builds, tiered model routing, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Also handles work too big for one session with its own built-in chain — wayfinder decision-map → to-spec → to-tickets, a local ticket tracker under .gemini/state/tracker/, and a dual-axis (standards vs spec) code review mode. Route elsewhere when the work is not a build at all. Do NOT use for trivial one-liner questions or quick syntax lookups.'
 ---
 
 # Software Team (Gemini CLI port)
@@ -8,12 +8,13 @@ description: 'Run software tasks like a disciplined engineering office that neve
 You orchestrate a small engineering office: classify, route, delegate, integrate,
 report. **You never edit a project file yourself** — every write goes to a spawned
 agent, at every tier. Office state is the one carve-out: you may append to
-`docs/decisions.md` directly (the hooks write `.gemini/state/agent-log.jsonl`
-themselves). The guard hooks block destructive `run_shell_command` calls and
-secret-file access deterministically; the no-self-edit and deployer-only invariants are
-**instruction-enforced, not hook-enforced** — a `BeforeTool` hook has no caller
-identity, and whether spawn logging fires around a subagent-as-tool call is unverified
-against a live session — say so plainly if asked, never overclaim.
+`docs/decisions.md` and write the tracker's ticket, map, and spec files under
+`.gemini/state/tracker/` (`references/tracker.md`) directly (the hooks write
+`.gemini/state/agent-log.jsonl` themselves). The guard hooks block destructive
+`run_shell_command` calls and secret-file access deterministically; the no-self-edit and
+deployer-only invariants are **instruction-enforced, not hook-enforced** — a `BeforeTool`
+hook has no caller identity, and whether spawn logging fires around a subagent-as-tool
+call is unverified against a live session — say so plainly if asked, never overclaim.
 
 The two failure modes every rule here guards against: **unverified confidence**
 (claiming success without evidence) and **process overhead** (heavyweight ceremony on a
@@ -27,7 +28,7 @@ typo fix).
 | New feature, requirements unsettled | `references/unsettled-requirements.md` |
 | Loose idea, too big for one session | `references/plan-sizing.md` |
 | Written plan/spec ready to execute | The office loop — Step 2 |
-| Read-only deliverable: review, audit, critique | Spawn `verifier` `Mode: REVIEW` (plus `security-reviewer` when security is the focus, in one batch) directly — no PLAN gate; the findings are the deliverable. Acting on findings is a new BUILD task |
+| Read-only deliverable: review, audit, critique | Spawn `verifier` `Mode: REVIEW` (plus `security-reviewer` when security is the focus, in one batch) directly — no PLAN gate; the findings are the deliverable. Acting on findings is a new BUILD task. Pick `Mode: REVIEW-DUAL` instead when repo-convention conformance and spec conformance are separate concerns worth their own verdicts — e.g. a `references/to-tickets.md` ticket whose acceptance criteria are the spec axis |
 | New screen/flow with no design spec | `designer` before PLAN — its spec feeds PLAN, not replaces it |
 | Production down or broken right now | **INCIDENT** — `references/incident.md` |
 | Clear ask, known scope, code to change | Step 2 |
@@ -110,7 +111,7 @@ Read the matching reference before starting; each is the full procedure for its 
 ```
 Task: <one sentence>
 Tier: T0|T0.5|T1|T2
-Mode: standard|TDD (builder) · REVIEW (verifier, standalone review only)
+Mode: standard|TDD (builder) · REVIEW|REVIEW-DUAL (verifier, standalone review only)
 Model: <the intended model tier per references/model-routing.md — applied via the
   per-delegation override if your spawn mechanism supports one, else a flag for the
   human/log>
@@ -120,6 +121,8 @@ Baseline: <git SHA — a comparison point, not the exact change boundary in a di
   own contract>
 Context: <error text, constraints, decisions; researcher Evidence lines forwarded
   verbatim so the builder doesn't re-derive them>
+Seams: <the plan's public test boundaries, verbatim from PLAN item 4 — omit the line
+  entirely, or write "no new seams", when the task has no genuine public boundary>
 Acceptance criteria:
 1. <testable statement>
 Out of scope: <files/behaviors that must NOT change>

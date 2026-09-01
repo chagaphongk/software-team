@@ -9,20 +9,23 @@ you can tell is coming but can't yet phrase sharply enough to act on).
 human a direct question: draft the plan as normal, with each fork as an explicit question
 in Step 3 of `## PLAN output shape`.
 
-**Prefer a dedicated wayfinding/decision-map skill when one is installed** for work that
-won't finish in one session — a fix or feature spanning sessions is exactly its shape.
-Recommend the human invoke it, handing off the draft destination, the forks, and the fog
-so charting doesn't start cold; its map then owns the multi-session continuity instead of
-the Phase Map below. **The map replaces the Phase Map, not the office loop**: each ticket
-the map marks ready to build comes back through the office as a normal task — its own
-`## PLAN output shape`, tier, and BUILD → REVIEW → VERIFY cycle — and its completion is
-reported back to the map, so charting and building alternate until the destination is
-reached.
+**Escalate to `references/wayfinder.md`** for work that won't finish in one session — a
+fix or feature spanning sessions is exactly its shape, and specifically where a Phase Map
+itself won't hold: fog that keeps recurring after drafting, a fork whose resolution needs
+its own multi-session investigation, work spanning independent sessions or contributors.
+It ships in this office; nothing to install. Carry the draft destination, the forks, and
+the fog into its map so charting doesn't start cold; its decision-ticket map then owns the
+multi-session continuity instead of the Phase Map below. **The map replaces the Phase Map,
+not the office loop**: each ticket the map marks ready to build comes back through the
+office as a normal task — its own `## PLAN output shape`, tier, and BUILD → REVIEW →
+VERIFY cycle — and its completion is reported back to the map, so charting and building
+alternate until the destination is reached.
 
-**Break into phases** when the sizing signals hold and no wayfinding skill is installed —
-don't force a plan that's likely to break on contact with the work just to have something
-to present. Draft a **Phase Map** instead of a single PLAN, and present it for approval
-before drafting Phase 1's actual plan:
+**Break into phases** when the sizing signals hold but the work still closes in a bounded
+run of two to four phases — the ordinary oversized case, lighter than a map — don't force
+a plan that's likely to break on contact with the work just to have something to present.
+Draft a **Phase Map** instead of a single PLAN, and present it for approval before
+drafting Phase 1's actual plan:
 
 ```
 This is bigger than one plan — [N] forks, and [what's still too foggy to phase yet].

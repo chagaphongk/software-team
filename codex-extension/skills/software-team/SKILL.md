@@ -1,6 +1,6 @@
 ---
 name: software-team
-description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned sub-agent via the spawn-agent tool, with an independent verifier — which also carries the review — on non-trivial work, each role''s contract inlined from references/roles.md into the spawn''s task message (Codex has no named-persona agent file). Classify the risk tier (T0/T0.5/T1/T2) first, route by a spawn matrix through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, and gate risky or irreversible work behind human approval executed only via the deployer role. Prefer this over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Do NOT use for trivial one-liner questions or quick syntax lookups.'
+description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned sub-agent via the spawn-agent tool, with an independent verifier — which also carries the review — on non-trivial work, each role''s contract inlined from references/roles.md into the spawn''s task message (Codex has no named-persona agent file). Classify the risk tier (T0/T0.5/T1/T2) first, route by a spawn matrix through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, and gate risky or irreversible work behind human approval executed only via the deployer role. Prefer this over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Also handles work too big for one session with its own built-in chain — wayfinder decision-map → to-spec → to-tickets, a local ticket tracker under .software-team/state/tracker/, and a dual-axis (standards vs spec) code review mode. Do NOT use for trivial one-liner questions or quick syntax lookups.'
 ---
 
 # Software Team (Codex port)
@@ -8,10 +8,10 @@ description: 'Run software tasks like a disciplined engineering office that neve
 You orchestrate a small engineering office: classify, route, delegate, integrate,
 report. **You never edit a project file yourself** — every write goes to a spawned
 sub-agent, at every tier. Office state is the one carve-out: you may append to
-`docs/decisions.md` directly (the hooks write `.software-team/state/agent-log.jsonl`
-where they fire — `SubagentStart` is confirmed firing on Codex 0.151.0, including under
-`codex exec`; guard-hook block-before-execution remains unverified — see
-`hooks/PORT_NOTES.md`).
+`docs/decisions.md` and `.software-team/state/` directly (the hooks write
+`.software-team/state/agent-log.jsonl` where they fire — `SubagentStart` is
+confirmed firing on Codex 0.151.0, including under `codex exec`; guard-hook
+block-before-execution remains unverified — see `hooks/PORT_NOTES.md`).
 The no-self-edit and deployer-only invariants are **instruction-enforced** — say so
 plainly if asked, never overclaim.
 
@@ -40,7 +40,7 @@ typo fix).
 | New feature, requirements unsettled | `references/unsettled-requirements.md` |
 | Loose idea, too big for one session | `references/plan-sizing.md` |
 | Written plan/spec ready to execute | The office loop — Step 2 |
-| Read-only deliverable: review, audit, critique | Spawn the `verifier` role with `Mode: REVIEW` (plus the `security-reviewer` role when security is the focus, in one batch) directly — no PLAN gate; the findings are the deliverable. Acting on findings is a new BUILD task |
+| Read-only deliverable: review, audit, critique | Spawn the `verifier` role with `Mode: REVIEW` (plus the `security-reviewer` role when security is the focus, in one batch) directly — no PLAN gate; the findings are the deliverable. Acting on findings is a new BUILD task. Pick `Mode: REVIEW-DUAL` instead when repo-convention conformance and spec conformance are separate concerns worth their own verdicts — e.g. a `references/to-tickets.md` ticket whose acceptance criteria are the spec axis |
 | New screen/flow with no design spec | The `designer` role before PLAN — its spec feeds PLAN, not replaces it |
 | Production down or broken right now | **INCIDENT** — `references/incident.md` |
 | Clear ask, known scope, code to change | Step 2 |
@@ -129,7 +129,7 @@ The task message = the role contract from `references/roles.md`, then:
 Task name: <short unique name for the spawn call's own `task_name` field>
 Task: <one sentence>
 Tier: T0|T0.5|T1|T2
-Mode: standard|TDD (builder) · REVIEW (verifier, standalone review only)
+Mode: standard|TDD (builder) · REVIEW|REVIEW-DUAL (verifier, standalone review only)
 Model: <model + reasoning_effort per references/model-routing.md — must match the
   spawn call's own fields>
 Files: <exact paths>
@@ -138,6 +138,8 @@ Baseline: <git SHA — a comparison point, not the exact change boundary in a di
   own contract>
 Context: <error text, constraints, decisions; researcher Evidence lines forwarded
   verbatim so the builder doesn't re-derive them>
+Seams: <the plan's public test boundaries, verbatim from PLAN item 4 — omit the line
+  entirely, or write "no new seams", when the task has no genuine public boundary>
 Acceptance criteria:
 1. <testable statement>
 Out of scope: <files/behaviors that must NOT change>

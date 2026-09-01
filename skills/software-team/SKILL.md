@@ -1,6 +1,6 @@
 ---
 name: software-team
-description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with an independent verifier — which also carries the review — on non-trivial work. Classify the risk tier (T0/T0.5/T1/T2) first, route by a spawn matrix through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, and gate risky or irreversible work behind human approval — deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself. Prefer this over agent-office when you want the stricter zero-self-edit invariant, and over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Route elsewhere when the work is not a build at all. Do NOT use for trivial one-liner questions or quick syntax lookups.'
+description: 'Run software tasks like a disciplined engineering office that never edits project files itself — every task that touches a file, trivial ones included, goes to a spawned builder subagent, with an independent verifier — which also carries the review — on non-trivial work. Classify the risk tier (T0/T0.5/T1/T2) first, route by a spawn matrix through RESEARCH → PLAN → BUILD → REVIEW → VERIFY, and gate risky or irreversible work behind human approval — deploy/publish/push always executes via a dedicated deployer given the human''s quoted approval, never by the orchestrator itself. Prefer this over agent-office when you want the stricter zero-self-edit invariant, and over a single-conversation role-play team whenever the task needs real parallel delegation, multi-file builds, or an independent fresh-context verifier — "build this feature", "fix this bug", "design this API", "orchestrate this migration" — or mentions agent teams, subagent orchestration, risk tiers. Also handles work too big for one session with its own built-in chain — wayfinder decision-map → to-spec → to-tickets, a local ticket tracker under .claude/state/tracker/, and a dual-axis (standards vs spec) code review mode. Route elsewhere when the work is not a build at all. Do NOT use for trivial one-liner questions or quick syntax lookups.'
 ---
 
 # Software Team
@@ -25,7 +25,7 @@ typo fix).
 | New feature, requirements unsettled | `references/unsettled-requirements.md` |
 | Loose idea, too big for one session | `references/plan-sizing.md` |
 | Written plan/spec ready to execute | The office loop — Step 2 |
-| Read-only deliverable: review, audit, critique | Spawn `software-team:verifier` `Mode: REVIEW` (plus `software-team:security-reviewer` when security is the focus, in one batch) directly — no PLAN gate; the findings are the deliverable. Acting on findings is a new BUILD task |
+| Read-only deliverable: review, audit, critique | Spawn `software-team:verifier` `Mode: REVIEW` (plus `software-team:security-reviewer` when security is the focus, in one batch) directly — no PLAN gate; the findings are the deliverable. Acting on findings is a new BUILD task. Pick `Mode: REVIEW-DUAL` instead when repo-convention conformance and spec conformance are separate concerns worth their own verdicts — e.g. a `references/to-tickets.md` ticket whose acceptance criteria are the spec axis |
 | New screen/flow with no design spec | `software-team:designer` before PLAN — its spec feeds PLAN, not replaces it |
 | Production down or broken right now | **INCIDENT** — `references/incident.md` |
 | Clear ask, known scope, code to change | Step 2 |
@@ -109,7 +109,7 @@ Read the matching reference before starting; each is the full procedure for its 
 ```
 Task: <one sentence>
 Tier: T0|T0.5|T1|T2
-Mode: standard|TDD (builder) · REVIEW (verifier, standalone review only)
+Mode: standard|TDD (builder) · REVIEW|REVIEW-DUAL (verifier, standalone review only)
 Model: <haiku|sonnet|opus — must match the Agent call's model parameter>
 Files: <exact paths>
 Baseline: <git SHA — a comparison point, not the exact change boundary in a dirty
@@ -117,6 +117,8 @@ Baseline: <git SHA — a comparison point, not the exact change boundary in a di
   own contract>
 Context: <error text, constraints, decisions; researcher Evidence lines forwarded
   verbatim so the builder doesn't re-derive them>
+Seams: <the plan's public test boundaries, verbatim from PLAN item 4 — omit the line
+  entirely, or write "no new seams", when the task has no genuine public boundary>
 Acceptance criteria:
 1. <testable statement>
 Out of scope: <files/behaviors that must NOT change>
